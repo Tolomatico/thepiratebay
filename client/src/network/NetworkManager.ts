@@ -16,7 +16,8 @@ export class NetworkManager {
     socket: Socket;
 
     constructor() {
-        this.socket = io(`${import.meta.env.VITE_BACK_URL || 'http://localhost:3001'} `);
+        // this.socket = io(`https://thepiratebay.onrender.com`);
+        this.socket = io(`http://localhost:3001`);
         this.setupEvents();
     }
 
@@ -53,7 +54,6 @@ onPlayerJoined(callback: (data: { id: string }) => void) {
 
 onPlayerShoot(callback: (data: { id: string; type: "front" | "left" | "right" }) => void) {
   this.socket.on("playerShoot", (data) => {
-  console.log("disparo recibido en networkmanager", data);
   callback(data);
 });
 }

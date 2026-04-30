@@ -3,12 +3,12 @@ import { Water } from 'three/examples/jsm/objects/Water.js';
 
 export class Ocean {
   private water: Water;
-  private waveHeight = 0.05;
+  private waveHeight = 0.005;
   private waveSpeed = 0.0005;
   private waveLength = 0.03;
 
   constructor(scene: THREE.Scene) {
-    const geometry = new THREE.PlaneGeometry(500, 500, 500, 500);
+    const geometry = new THREE.PlaneGeometry(200, 200, 200, 200);
 
     this.water = new Water(geometry, {
       textureWidth: 512,

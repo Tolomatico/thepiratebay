@@ -31,9 +31,9 @@ export class RemotePlayer {
     scene.add(this.container);
 
     this.loadModel();
-    this.frontCanon = new FrontCanon(this.scene, this.container,() => this.onShoot("front"),0);
-    this.leftCanon = new SideCanon(this.scene, this.container,() => this.onShoot("left"), "left", 0);
-    this.rightCanon = new SideCanon(this.scene, this.container,() => this.onShoot("right"), "right", 0);
+    this.frontCanon = new FrontCanon(this.scene, this.container,() => this.onShoot("front"));
+    this.leftCanon = new SideCanon(this.scene, this.container,() => this.onShoot("left"), "left");
+    this.rightCanon = new SideCanon(this.scene, this.container,() => this.onShoot("right"), "right");
   }
 
   private onShoot(type: "left" | "right" | "front") {

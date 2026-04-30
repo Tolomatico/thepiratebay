@@ -19,7 +19,7 @@ class Game {
   private modelManager: ModelManager;
   private ocean!: Ocean
   private controls: Controlls
-  private clock = new THREE.Clock();
+  private timer = new THREE.Timer();
   private hud!: HUD
   public enemyManager!: EnemyManager;
   private soundManager!: SoundManager;
@@ -105,7 +105,9 @@ this.networkManager.onPlayerJoined((data) => {
 
 
   animate =()=>{
-
+this.timer.update();
+  const time = this.timer.getElapsed() * 1000;
+  const delta = this.timer.getDelta() * 1000;
     this.networkManager.emitMove({
   position: {
     x: this.boat.position.x,
@@ -114,9 +116,6 @@ this.networkManager.onPlayerJoined((data) => {
   },
   rotation: { y: this.boat.getObject3D().rotation.y }
 });
-   
-    const time = performance.now()
-    const delta = this.clock.getDelta()* 1000;
     this.boat.update(this.inputManager, time,delta)
     this.ocean.update(time)
     this.playerManager.update(delta);

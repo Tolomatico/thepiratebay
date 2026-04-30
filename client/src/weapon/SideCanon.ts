@@ -1,19 +1,17 @@
-import { Projectile } from "./Projectile";
 import { WeaponSystem } from "./WeaponSystem";
 import * as THREE from "three";
 
 export class SideCanon extends WeaponSystem {
-   private damage:number
   private leftOrRight: "left" | "right";
   private delayBetweenShots: number = 150;
 
   
 
-  constructor(scene: THREE.Scene, origin: THREE.Object3D, onShoot: () => void, leftOrRight: "left" | "right",damage:number,quantity?:number) {
+  constructor(scene: THREE.Scene, origin: THREE.Object3D, onShoot: () => void, leftOrRight: "left" | "right",quantity?:number) {
         super(scene, origin, onShoot);
         this.fireRate = 2000;
         this.leftOrRight = leftOrRight;
-        this.damage = damage;
+         this.damage = 25;
         if(quantity)this.quantity = quantity;
     }
 
@@ -25,8 +23,8 @@ export class SideCanon extends WeaponSystem {
       this.shotTimer -= delta;
 
       if (this.shotTimer <= 0) {
-        this.fireOne();
-        this.onShoot();
+        const success = this.fireOne();
+        if (success) this.onShoot();
         this.shotQueue--;
         this.shotTimer = this.delayBetweenShots;
       }
@@ -34,11 +32,11 @@ export class SideCanon extends WeaponSystem {
   }
 
 
-     private fireOne(): void {
+     private fireOne(): boolean {
     const shotIndex = this.quantity - this.shotQueue;
     const pos = new THREE.Vector3();
     this.origin.getWorldPosition(pos);
-    pos.y += 4;
+    pos.y += 0.7;
 
     const forward = new THREE.Vector3();
     forward.setFromMatrixColumn(this.origin.matrixWorld, 2);
@@ -53,7 +51,11 @@ export class SideCanon extends WeaponSystem {
       dir.setFromMatrixColumn(this.origin.matrixWorld, 0).negate();
     }
 
-    this.projectiles.push(new Projectile(this.scene, pos, dir, this.damage));
+   const projectile = this.createProjectile(pos, dir);
+  if (!projectile) return false;
+  return true;
+
+
   }
   shoot(): void {
   if (!this.canShoot()) return;

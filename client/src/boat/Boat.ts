@@ -47,13 +47,13 @@ export class Boat {
         this.container = new THREE.Group();
         this.onShoot=onShoot
         this.visualBox = new THREE.Group();
-        this.frontCanon = new FrontCanon(this.scene, this.container,() => this.onShoot("front"),this.frontCanonDamage);
+        this.frontCanon = new FrontCanon(this.scene, this.container,() => this.onShoot("front"));
         // todo elimianr después
         this.scene.background = new THREE.Color(0x87ceeb);
         this.container.add(this.visualBox);
         this.scene.add(this.container);
-        this.leftCanon = new SideCanon(this.scene, this.container,() => this.onShoot("left"),"left",this.leftCanonDamage);
-        this.rightCanon = new SideCanon(this.scene, this.container,() => this.onShoot("right"),"right",this.rightCanonDamage);
+        this.leftCanon = new SideCanon(this.scene, this.container,() => this.onShoot("left"),"left");
+        this.rightCanon = new SideCanon(this.scene, this.container,() => this.onShoot("right"),"right");
        
       
        this.loadModel().then(() => {
@@ -115,9 +115,9 @@ async loadModel( ) {
   box.getSize(size);
 
   // 2️⃣ definir tamaño objetivo (como tu caja roja)
-  const targetWidth =50;
-  const targetHeight = 50;
-  const targetDepth =50;
+  const targetWidth =5;
+  const targetHeight = 5;
+  const targetDepth =5;
 
   const scaleX = targetWidth / size.x;
   const scaleY = targetHeight / size.y;
