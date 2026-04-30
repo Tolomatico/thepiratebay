@@ -1,0 +1,65 @@
+import { Projectile } from "./Projectile";
+import { WeaponSystem } from "./WeaponSystem";
+import * as THREE from "three";
+
+export class SideCanon extends WeaponSystem {
+   private damage:number
+  private leftOrRight: "left" | "right";
+  private delayBetweenShots: number = 150;
+
+  
+
+  constructor(scene: THREE.Scene, origin: THREE.Object3D, onShoot: () => void, leftOrRight: "left" | "right",damage:number,quantity?:number) {
+        super(scene, origin, onShoot);
+        this.fireRate = 2000;
+        this.leftOrRight = leftOrRight;
+        this.damage = damage;
+        if(quantity)this.quantity = quantity;
+    }
+
+
+    update(delta: number): void {
+    super.update(delta);
+
+    if (this.shotQueue > 0) {
+      this.shotTimer -= delta;
+
+      if (this.shotTimer <= 0) {
+        this.fireOne();
+        this.onShoot();
+        this.shotQueue--;
+        this.shotTimer = this.delayBetweenShots;
+      }
+    }
+  }
+
+
+     private fireOne(): void {
+    const shotIndex = this.quantity - this.shotQueue;
+    const pos = new THREE.Vector3();
+    this.origin.getWorldPosition(pos);
+    pos.y += 4;
+
+    const forward = new THREE.Vector3();
+    forward.setFromMatrixColumn(this.origin.matrixWorld, 2);
+
+    const spread = (shotIndex - (this.quantity - 1) / 2);
+    pos.addScaledVector(forward, spread * 0.5);
+
+    const dir = new THREE.Vector3();
+    if (this.leftOrRight === "left") {
+      dir.setFromMatrixColumn(this.origin.matrixWorld, 0);
+    } else {
+      dir.setFromMatrixColumn(this.origin.matrixWorld, 0).negate();
+    }
+
+    this.projectiles.push(new Projectile(this.scene, pos, dir, this.damage));
+  }
+  shoot(): void {
+  if (!this.canShoot()) return;
+  this.shotQueue = this.quantity;  // carga la cola
+  this.shotTimer = 0;              // dispara el primero inmediatamente
+  this.resetCooldown();
+}
+
+    }
