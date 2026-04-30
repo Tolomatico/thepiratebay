@@ -16,7 +16,7 @@ export class NetworkManager {
     socket: Socket;
 
     constructor() {
-        this.socket = io("http://localhost:3001");
+        this.socket = io(`${import.meta.env.VITE_BACK_URL || 'http://localhost:3001'} `);
         this.setupEvents();
     }
 
