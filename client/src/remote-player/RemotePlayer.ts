@@ -36,7 +36,8 @@ export class RemotePlayer {
     this.rightCanon = new SideCanon(this.scene, this.container,() => this.onShoot("right"), "right", 0);
   }
 
-  private onShoot(type: string) {
+  private onShoot(type: "left" | "right" | "front") {
+    console.log("disparo del jugador remoto",type)
   // no hacemos nada, no hay sonido ni emisión
 }
 

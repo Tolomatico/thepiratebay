@@ -2,7 +2,7 @@ import { Howl } from 'howler';
 
 export class SoundManager {
   private shootSound: Howl;
-  private explosionSound: Howl;
+  //private explosionSound: Howl;
  // private music: Howl;
 
   constructor() {

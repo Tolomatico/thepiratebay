@@ -30,14 +30,14 @@ export class Boat {
   private dimensions!: THREE.Vector3;
   private explosions: Explosion[] = [];
 
-  private onShoot: (type: string) => void
+  private onShoot: (type: "front" | "left" | "right") => void
    
   
   constructor(
       scene: THREE.Scene,
       modelManager: ModelManager,
       ocean: Ocean,
-      onShoot: (type:string) => void,
+      onShoot: (type: "front" | "left" | "right") => void,
       
     ) {
         this.model=null as unknown as THREE.Object3D;
