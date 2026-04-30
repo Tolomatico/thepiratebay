@@ -1,5 +1,5 @@
 import { Server } from "http";
-import { GameManager } from "../game-manager/GameManager";
+import { GameManager } from "../game-manager/GameManager.js";
 
 interface MoveData {
   position: { x: number; y: number; z: number };
@@ -21,7 +21,7 @@ export class SocketManager {
             this.gameManager.addPlayer(socket.id);
 
              // mandar al nuevo jugador todos los que ya están
-            socket.emit("currentPlayers", this.gameManager.getState().filter(p => p.id !== socket.id));
+            socket.emit("currentPlayers", this.gameManager.getState().filter((p: any) => p.id !== socket.id));
             // ← acá van los eventos
             socket.on("playerMove", (data: MoveData) => {
                 this.gameManager.movePlayer(socket.id, data.position, data.rotation);
