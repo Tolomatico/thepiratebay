@@ -21,4 +21,8 @@ export class GameManager {
   getState(): Player[] {
     return Array.from(this.players.values());
   }
+
+  update(delta: number) {
+     console.log(`[GameManager] Tick - Delta: ${delta.toFixed(2)}ms`);
+  }
 }

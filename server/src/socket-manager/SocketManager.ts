@@ -9,10 +9,10 @@ interface MoveData {
 
 export class SocketManager {
     private io: Server;
-    private gameManager: GameManager;
-    constructor(io: Server) {
+    public gameManager: GameManager;
+    constructor(io: Server,gameManager:GameManager) {
         this.io = io;
-        this.gameManager = new GameManager();
+        this.gameManager = gameManager;
         this.setupEvents()
     }
 
@@ -34,7 +34,6 @@ export class SocketManager {
             }); 
 
             socket.on("playerShoot", (data:{type:string}) => {
-                console.log("disparo",data.type)
   socket.broadcast.emit("playerShoot", {
     id: socket.id,
     type: data.type
