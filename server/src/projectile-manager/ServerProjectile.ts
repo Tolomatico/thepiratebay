@@ -5,17 +5,20 @@ export class ServerProjectile {
   damage: number;
   age = 0;
   lifetime = 5000;
+  id!: string;
 
   constructor(
     position: { x: number; y: number; z: number },
     direction: { x: number; y: number; z: number },
     ownerId: string,
-    damage: number
+    damage: number,
+    projectileId: string
   ) {
     this.position = { ...position };
     this.ownerId = ownerId;
     this.damage = damage;
-    const speed = 0.2;
+    this.id = projectileId;
+    const speed = 0.12;
     this.velocity = {
       x: direction.x * speed,
       y: direction.y * speed,
@@ -23,10 +26,14 @@ export class ServerProjectile {
     };
   }
 
-  update(delta: number) {
-    this.position.x += this.velocity.x;
-    this.position.y += this.velocity.y;
-    this.position.z += this.velocity.z;
+  kill() {
+  this.age = this.lifetime + 1;
+}
+
+update(delta: number) {
+  this.position.x += this.velocity.x;
+  this.position.y += this.velocity.y;
+  this.position.z += this.velocity.z;
     this.age += delta;
   }
 

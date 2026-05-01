@@ -51,4 +51,8 @@ export class PlayerManager {
     getPlayer(id: string) {
         return this.players.get(id);
     }
+
+    getPlayers(): RemotePlayer[] {
+        return Array.from(this.players.values());
+    }
 }

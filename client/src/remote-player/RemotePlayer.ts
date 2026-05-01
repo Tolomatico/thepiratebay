@@ -13,6 +13,9 @@ export class RemotePlayer {
   private id:string
    private hitboxSize = { x: 10, y: 10, z: 10 }; // mismo tamaño que el modelo
   
+  // Health
+  public health: number = 500;
+  public maxHealth: number = 500;
 
   // Weapons
      private leftCanon: SideCanon;
@@ -124,8 +127,17 @@ shoot(type: "front" | "left" | "right", projectileId: string) {
     this.container.removeFromParent();
   }
   takeDamage(damage: number) {
-  console.log(`RemotePlayer ${this.id} recibió ${damage} daño`);
-}
+    this.health -= damage;
+    console.log(`RemotePlayer ${this.id} recibió ${damage} daño. Vida restante: ${this.health}`);
+  }
+
+  getPosition(): THREE.Vector3 {
+    return this.container.position.clone();
+  }
+
+  getHealthRatio(): number {
+    return Math.max(0, this.health / this.maxHealth);
+  }
 
   update(delta: number) {
     this.frontCanon.update(delta);

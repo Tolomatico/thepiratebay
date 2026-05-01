@@ -13,13 +13,14 @@ export class ProjectileManager {
     position: { x: number; y: number; z: number },
     direction: { x: number; y: number; z: number },
     ownerId: string,
-    damage: number
+    damage: number,
+    projectileId: string
   ) {
-    this.projectiles.push(new ServerProjectile(position, direction, ownerId, damage));
+    this.projectiles.push(new ServerProjectile(position, direction, ownerId, damage,projectileId));
   }
 
-  update(delta: number): { id: string; damage: number; health: number }[] {
-    const hits: { id: string; damage: number; health: number }[] = [];
+  update(delta: number): { id: string; damage: number; health: number, projectileId: string }[] {
+    const hits: { id: string; damage: number; health: number,projectileId:string }[] = [];
 
     for (const projectile of this.projectiles) {
       projectile.update(delta);
@@ -32,13 +33,15 @@ export class ProjectileManager {
     return hits; // ← devuelve los impactos para que GameManager los emita
   }
 
-  private checkCollisions(hits: { id: string; damage: number; health: number }[]) {
+  private checkCollisions(hits: { id: string; damage: number; health: number,projectileId:string }[]) {
     const players = this.gameManager.getState();
     
 
     for (const projectile of this.projectiles) {
+      if (projectile.age > projectile.lifetime) continue; // Si ya murió, ignorar
+
       for (const player of players) {
-        if (player.id === projectile.ownerId) continue; // no te dañás a vos mismo
+        if (player.id === projectile.ownerId) continue; 
 
         const dx = projectile.position.x - player.position.x;
         const dy = projectile.position.y - player.position.y;
@@ -47,9 +50,15 @@ export class ProjectileManager {
  
         if (distance < 2.5) { // hitRadius
          player.takeDamage(projectile.damage);
-          projectile.age = projectile.lifetime + 1; // matar proyectil
-          console.log(`Player ${player.id} hit by projectile ${projectile.ownerId}`);
-          hits.push({ id: player.id, damage: projectile.damage, health: player.health });
+           projectile.kill();
+          projectile.age = projectile.lifetime + 5; // matar proyectil
+         hits.push({ 
+    id: player.id, 
+    damage: projectile.damage, 
+    health: player.health,
+    projectileId: projectile.id  
+  });
+  projectile.age = projectile.lifetime + 5;
         }
       }
     }

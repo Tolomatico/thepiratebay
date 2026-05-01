@@ -37,6 +37,7 @@ class Game {
     this.scene = new THREE.Scene()
     this.scene.background = new THREE.Color(0x87CEEB);
     this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
+    this.camera.name = "mainCamera";
     this.camera.position.set(0, 5, 5)
     this.camera.lookAt(0, 0, 0)
 
@@ -107,16 +108,16 @@ class Game {
        this.playerManager.updatePlayer(data);
     });
     this.networkManager.onPlayerDamaged((data) => {
-      console.log("Impacto recibido. Proyectil ID:", data.projectileId);
-      
       // Destrucción O(1) usando el registro global
       this.projectileRegistry.get(data.projectileId)?.kill();
       
       if (data.id === this.networkManager.socket.id) {
         this.boat.takeDamage(data.damage);
       } else {
-        const player = this.playerManager.getPlayer(data.id);
-        if (player) player.takeDamage(data.damage);
+        const remotePlayer = this.playerManager.getPlayer(data.id);
+        if (remotePlayer) {
+          remotePlayer.takeDamage(data.damage);
+        }
       }
     });
     
@@ -174,7 +175,14 @@ this.networkManager.onPlayerJoined((data) => {
   // this.boat.velocity,
   // this.boat.getHitbox(),
   // (damage) => this.boat.takeDamage(damage))
-    this.hud.update({ player: {playerHealth:this.boat.health, maxPlayerHealth:this.boat.maxHealth}, enemyCount: this.enemyManager.enemies.length,enemies:this.enemyManager.getEnemies()});
+    this.hud.update({ 
+      player: {playerHealth:this.boat.health, maxPlayerHealth:this.boat.maxHealth}, 
+      enemyCount: this.enemyManager.enemies.length + this.playerManager.getPlayers().length,
+      enemies: [
+        ...this.enemyManager.getEnemies(),
+        ...this.playerManager.getPlayers()
+      ]
+    });
     this.renderer.render(this.scene, this.camera)
     requestAnimationFrame(this.animate)
   }

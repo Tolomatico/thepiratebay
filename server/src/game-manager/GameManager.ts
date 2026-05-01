@@ -33,14 +33,14 @@ export class GameManager {
     position: { x: number; y: number; z: number },
     direction: { x: number; y: number; z: number },
     ownerId: string,
-    damage: number
+    damage: number,
+    projectileId: string
   ) {
-    console.log(position,direction,ownerId,damage)
-    this.projectileManager.addProjectile(position, direction, ownerId, damage);
+    this.projectileManager.addProjectile(position, direction, ownerId, damage,projectileId);
   }
 
 
-  update(delta: number): { id: string; damage: number; health: number }[] {
+  update(delta: number): { id: string; damage: number; health: number, projectileId: string }[] {
   return this.projectileManager.update(delta);
 }
 }

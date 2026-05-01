@@ -16,7 +16,7 @@ export class SocketManager {
         this.setupEvents()
     }
 
-    emitHits(hits: { id: string; damage: number; health: number }[]) {
+    emitHits(hits: { id: string; damage: number; health: number, projectileId: string }[]) {
         for (const hit of hits) {
             this.io.emit("playerDamaged", hit);
         }
@@ -45,11 +45,14 @@ export class SocketManager {
   position: { x: number; y: number; z: number };
   direction: { x: number; y: number; z: number };
   damage: number;
+  projectileId: string;
 }) => {
-this.gameManager.addProjectile(data.position, data.direction, socket.id, data.damage)
+    
+this.gameManager.addProjectile(data.position, data.direction, socket.id, data.damage,data.projectileId)
   socket.broadcast.emit("playerShoot", {
     id: socket.id,
-    type: data.type
+    type: data.type,
+    projectileId: data.projectileId
   });
 });
             // jugador se desconecta
