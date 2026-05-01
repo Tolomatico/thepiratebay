@@ -15,8 +15,10 @@ const io = new Server(server, {
 });
 
 const gameManager = new GameManager();
-new SocketManager(io as any,gameManager);
-const gameLoop = new GameLoop("fixed",gameManager);
+const socketManager = new SocketManager(io as any,gameManager);
+const gameLoop = new GameLoop("fixed",gameManager,(hits) => {
+  socketManager.emitHits(hits);
+});
 gameLoop.start();
 
 

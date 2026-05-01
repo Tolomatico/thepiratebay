@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { WeaponSystem } from "./WeaponSystem";
 
 export class FrontCanon extends WeaponSystem {
-  constructor(scene: THREE.Scene, origin: THREE.Object3D,onShoot: () => void) {
+  constructor(scene: THREE.Scene, origin: THREE.Object3D,onShoot: (type:"left" | "right",direction:THREE.Vector3) => void) {
     super(scene, origin,onShoot);
     this.damage = 50;
     this.fireRate = 2000;
@@ -21,7 +21,7 @@ export class FrontCanon extends WeaponSystem {
   const projectile = this.createProjectile(pos, dir);
   if (!projectile) return; // ← pool lleno, no hacer nada
 
-  this.onShoot();
+ this.onShoot("front",dir); 
   this.resetCooldown();
 }
 

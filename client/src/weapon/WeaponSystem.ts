@@ -8,7 +8,7 @@ export abstract class WeaponSystem {
   protected fireRate =500; 
   protected damage: number = 0;
   protected projectiles: Projectile[] = [];
-  protected onShoot: () => void;
+  protected onShoot: (type:"left" | "right" | "front",direction:THREE.Vector3) => void;
   protected quantity: number = 2;  
   protected shotQueue: number = 0;    
   protected shotTimer: number = 0;
@@ -18,7 +18,7 @@ export abstract class WeaponSystem {
 
 
 
-  constructor(scene: THREE.Scene, origin: THREE.Object3D,onShoot: () => void) {
+  constructor(scene: THREE.Scene, origin: THREE.Object3D,onShoot: (type: "left" | "right" | "front", direction: THREE.Vector3) => void) {
     this.scene = scene;
     this.origin = origin;
     this.onShoot=onShoot;

@@ -16,6 +16,12 @@ export class SocketManager {
         this.setupEvents()
     }
 
+    emitHits(hits: { id: string; damage: number; health: number }[]) {
+        for (const hit of hits) {
+            this.io.emit("playerDamaged", hit);
+        }
+    }
+
     private setupEvents() {
         this.io.on("connection", (socket: any) => {
             this.gameManager.addPlayer(socket.id);
@@ -32,8 +38,15 @@ export class SocketManager {
                     ...data
                 });
             }); 
+            
 
-            socket.on("playerShoot", (data:{type:string}) => {
+            socket.on("playerShoot", (data: { 
+  type: string;
+  position: { x: number; y: number; z: number };
+  direction: { x: number; y: number; z: number };
+  damage: number;
+}) => {
+this.gameManager.addProjectile(data.position, data.direction, socket.id, data.damage)
   socket.broadcast.emit("playerShoot", {
     id: socket.id,
     type: data.type

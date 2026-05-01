@@ -22,22 +22,19 @@ export class Boat {
   private frontCanon: FrontCanon;
   private leftCanon!: SideCanon;
   private rightCanon!: SideCanon;
-  private frontCanonDamage =50;
-  private leftCanonDamage =30;
-  private rightCanonDamage =30;
   private boatHealth = 500;
   private maxBoatHealth = 500;
   private dimensions!: THREE.Vector3;
   private explosions: Explosion[] = [];
 
-  private onShoot: (type: "front" | "left" | "right") => void
+  private onShoot: (type: "front" | "left" | "right", direction: THREE.Vector3) => void
    
   
   constructor(
       scene: THREE.Scene,
       modelManager: ModelManager,
       ocean: Ocean,
-      onShoot: (type: "front" | "left" | "right") => void,
+      onShoot: (type: "front" | "left" | "right", direction: THREE.Vector3) => void,
       
     ) {
         this.model=null as unknown as THREE.Object3D;
@@ -45,15 +42,25 @@ export class Boat {
         this.modelManager=modelManager
         this.ocean = ocean
         this.container = new THREE.Group();
-        this.onShoot=onShoot
+        this.onShoot=onShoot;
         this.visualBox = new THREE.Group();
-        this.frontCanon = new FrontCanon(this.scene, this.container,() => this.onShoot("front"));
-        // todo elimianr después
-        this.scene.background = new THREE.Color(0x87ceeb);
-        this.container.add(this.visualBox);
-        this.scene.add(this.container);
-        this.leftCanon = new SideCanon(this.scene, this.container,() => this.onShoot("left"),"left");
-        this.rightCanon = new SideCanon(this.scene, this.container,() => this.onShoot("right"),"right");
+this.frontCanon = new FrontCanon(
+  this.scene, 
+  this.container,
+  (type,direction) => this.onShoot(type,direction)
+);
+this.leftCanon = new SideCanon(
+  this.scene, 
+  this.container,
+  (type,direction) => this.onShoot(type,direction),
+  "left"
+);
+this.rightCanon = new SideCanon(
+  this.scene, 
+  this.container,
+  (type,direction) => this.onShoot(type,direction),
+  "right"
+);
        
       
        this.loadModel().then(() => {

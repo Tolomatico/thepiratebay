@@ -1,7 +1,14 @@
 import { Player } from "../player-manager/Player.js";
+import { ProjectileManager } from "../projectile-manager/ProjectileManager.js";
 
 export class GameManager {
   private players: Map<string, Player> = new Map();
+  private projectileManager: ProjectileManager;
+
+
+  constructor(){
+    this.projectileManager = new ProjectileManager(this);
+  }
 
   addPlayer(id: string): Player {
     const player = new Player(id);
@@ -22,7 +29,18 @@ export class GameManager {
     return Array.from(this.players.values());
   }
 
-  update(delta: number) {
-     console.log(`[GameManager] Tick - Delta: ${delta.toFixed(2)}ms`);
+  addProjectile(
+    position: { x: number; y: number; z: number },
+    direction: { x: number; y: number; z: number },
+    ownerId: string,
+    damage: number
+  ) {
+    console.log(position,direction,ownerId,damage)
+    this.projectileManager.addProjectile(position, direction, ownerId, damage);
   }
+
+
+  update(delta: number): { id: string; damage: number; health: number }[] {
+  return this.projectileManager.update(delta);
+}
 }

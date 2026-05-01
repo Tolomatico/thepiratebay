@@ -61,9 +61,9 @@ shoot(type: "front" | "left" | "right") {
    box.getSize(size);
  
    // 2️⃣ definir tamaño objetivo (como tu caja roja)
-   const targetWidth =50;
-   const targetHeight = 50;
-   const targetDepth =50;
+   const targetWidth =5;
+   const targetHeight = 5;
+   const targetDepth =5;
  
    const scaleX = targetWidth / size.x;
    const scaleY = targetHeight / size.y;

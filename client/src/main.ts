@@ -70,16 +70,36 @@ class Game {
  
 
   public async init (){
-    this.inputManager = new InputManager()
-      this.boat = new Boat(this.scene, this.modelManager, this.ocean,(type:"front" | "left" | "right") => {
-      this.soundManager.playShootSound();
-    this.networkManager.emitShoot({ type }); })
+
+    // Inicializar los inputs 
+       this.inputManager = new InputManager()
+
+    // Inicializar el barco 
+   this.boat = new Boat(
+  this.scene, 
+  this.modelManager, 
+  this.ocean,
+  (type:"front" | "left" | "right", direction: THREE.Vector3) => {
+    this.soundManager.playShootSound();
+    this.networkManager.emitShoot({ 
+      type, 
+      position: { x: this.boat.position.x, y: this.boat.position.y, z: this.boat.position.z }, 
+      direction: { x: direction.x, y: direction.y, z: direction.z }, 
+      damage: 50 
+    });
+  }
+);
+      // Controles del jugador
     this.controls.setTarget(this.boat.getObject3D())
+
+
+    // Manejo de los jugadores remotos
     this.networkManager.onPlayerMoved((data) => {
        if (data.id === this.networkManager.socket.id) return;
-  this.playerManager.addPlayer(data.id);
-  this.playerManager.updatePlayer(data);
-});
+       this.playerManager.addPlayer(data.id);
+       this.playerManager.updatePlayer(data);
+    });
+    
     this.networkManager.onPlayerDisconnected((data) => {
       this.playerManager.removePlayer(data.id);
     });
@@ -105,9 +125,12 @@ this.networkManager.onPlayerJoined((data) => {
 
 
   animate =()=>{
-this.timer.update();
-  const time = this.timer.getElapsed() * 1000;
-  const delta = this.timer.getDelta() * 1000;
+    // Actualizar el tiempo
+    this.timer.update();
+    const time = this.timer.getElapsed() * 1000;
+    const delta = this.timer.getDelta() * 1000;
+
+    // Emitir la posición del jugador
     this.networkManager.emitMove({
   position: {
     x: this.boat.position.x,
@@ -116,17 +139,18 @@ this.timer.update();
   },
   rotation: { y: this.boat.getObject3D().rotation.y }
 });
+
     this.boat.update(this.inputManager, time,delta)
     this.ocean.update(time)
     this.playerManager.update(delta);
     this.controls.update()
-    this.enemyManager.update( time,
-  this.boat.getActiveProjectiles(),
-  delta,
-  this.boat.position,
-  this.boat.velocity,
-  this.boat.getHitbox(),
-  (damage) => this.boat.takeDamage(damage))
+  //   this.enemyManager.update( time,
+  // this.boat.getActiveProjectiles(),
+  // delta,
+  // this.boat.position,
+  // this.boat.velocity,
+  // this.boat.getHitbox(),
+  // (damage) => this.boat.takeDamage(damage))
     this.hud.update({ player: {playerHealth:this.boat.health, maxPlayerHealth:this.boat.maxHealth}, enemyCount: this.enemyManager.enemies.length,enemies:this.enemyManager.getEnemies()});
     this.renderer.render(this.scene, this.camera)
     requestAnimationFrame(this.animate)

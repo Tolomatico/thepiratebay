@@ -12,10 +12,11 @@ export class GameLoop {
   private accumulatedTime: number = 0;
   private readonly fixedDelta = 1000 / 60; // ~16.67ms por tick
   private readonly tickInterval = this.fixedDelta;
-
-  constructor(mode: GameLoopMode = "variable",gameManager:GameManager) {
+  private onTick: (hits: any[]) => void;
+  constructor(mode: GameLoopMode = "variable",gameManager:GameManager,onTick: (hits: any[]) => void) {
     this.mode = mode;
     this.gameManager = gameManager;
+     this.onTick = onTick;
   }
 
   start(): void {
@@ -49,6 +50,7 @@ export class GameLoop {
   }
 
   private runLogic(delta: number): void {
-    this.gameManager.update(delta)
+    const hits = this.gameManager.update(delta);
+    this.onTick(hits);
   }
 }

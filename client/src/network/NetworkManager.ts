@@ -48,7 +48,12 @@ onPlayerJoined(callback: (data: { id: string }) => void) {
     this.socket.on("playerDisconnected", callback);
   }
 
- emitShoot(data: { type: "front" | "left" | "right" }) {
+ emitShoot(data: {
+  type: "front" | "left" | "right";
+  position: { x: number; y: number; z: number };
+  direction: { x: number; y: number; z: number };
+  damage: number;
+}) {
   this.socket.emit("playerShoot", data);
 }
 
