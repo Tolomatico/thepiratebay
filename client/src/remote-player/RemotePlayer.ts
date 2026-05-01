@@ -10,7 +10,8 @@ export class RemotePlayer {
   private scene: THREE.Scene
   private modelManager: ModelManager
   private id:string
-
+   private hitboxSize = { x: 5, y: 5, z: 5 }; // mismo tamaño que el modelo
+  
 
   // Weapons
      private leftCanon: SideCanon;
@@ -39,6 +40,22 @@ export class RemotePlayer {
   private onShoot(type: "left" | "right" | "front") {
     console.log("disparo del jugador remoto",type)
   // no hacemos nada, no hay sonido ni emisión
+}
+
+
+
+containsPoint(point: { x: number; y: number; z: number }): boolean {
+  this.container.updateWorldMatrix(true,true);
+  const pos = new THREE.Vector3();
+  this.container.getWorldPosition(pos);
+  return (
+    point.x >= pos.x - this.hitboxSize.x / 2 &&
+    point.x <= pos.x + this.hitboxSize.x / 2 &&
+    point.y >= pos.y - this.hitboxSize.y / 2 &&
+    point.y <= pos.y + this.hitboxSize.y / 2 &&
+    point.z >= pos.z - this.hitboxSize.z / 2 &&
+    point.z <= pos.z + this.hitboxSize.z / 2
+  );
 }
 
 shoot(type: "front" | "left" | "right") {
@@ -104,6 +121,9 @@ shoot(type: "front" | "left" | "right") {
   destroy() {
     this.container.removeFromParent();
   }
+  takeDamage(damage: number) {
+  console.log(`RemotePlayer ${this.id} recibió ${damage} daño`);
+}
 
   update(delta: number) {
     this.frontCanon.update(delta);

@@ -26,7 +26,7 @@ export class Boat {
   private maxBoatHealth = 500;
   private dimensions!: THREE.Vector3;
   private explosions: Explosion[] = [];
-
+ 
   private onShoot: (type: "front" | "left" | "right", direction: THREE.Vector3) => void
    
   
@@ -44,6 +44,9 @@ export class Boat {
         this.container = new THREE.Group();
         this.onShoot=onShoot;
         this.visualBox = new THREE.Group();
+        this.container.add(this.visualBox)
+        this.scene.add(this.container)
+
 this.frontCanon = new FrontCanon(
   this.scene, 
   this.container,

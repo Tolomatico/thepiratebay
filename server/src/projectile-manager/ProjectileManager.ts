@@ -34,6 +34,7 @@ export class ProjectileManager {
 
   private checkCollisions(hits: { id: string; damage: number; health: number }[]) {
     const players = this.gameManager.getState();
+    
 
     for (const projectile of this.projectiles) {
       for (const player of players) {
@@ -43,10 +44,11 @@ export class ProjectileManager {
         const dy = projectile.position.y - player.position.y;
         const dz = projectile.position.z - player.position.z;
         const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
-
+ 
         if (distance < 2.5) { // hitRadius
-         // player.takeDamage(projectile.damage);
+         player.takeDamage(projectile.damage);
           projectile.age = projectile.lifetime + 1; // matar proyectil
+          console.log(`Player ${player.id} hit by projectile ${projectile.ownerId}`);
           hits.push({ id: player.id, damage: projectile.damage, health: player.health });
         }
       }

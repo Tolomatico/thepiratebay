@@ -99,6 +99,17 @@ class Game {
        this.playerManager.addPlayer(data.id);
        this.playerManager.updatePlayer(data);
     });
+
+    this.networkManager.onPlayerDamaged((data) => {
+  if (data.id === this.networkManager.socket.id) {
+    // te dañaron a vos
+    this.boat.takeDamage(data.damage);
+  } else {
+    // dañaron a otro jugador
+    const player = this.playerManager.getPlayer(data.id);
+    if (player) player.takeDamage(data.damage);
+  }
+});
     
     this.networkManager.onPlayerDisconnected((data) => {
       this.playerManager.removePlayer(data.id);

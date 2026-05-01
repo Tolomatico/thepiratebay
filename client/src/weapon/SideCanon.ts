@@ -16,21 +16,20 @@ export class SideCanon extends WeaponSystem {
     }
 
 
-    update(delta: number): void {
-    super.update(delta);
+  update(delta: number): void {
+  super.update(delta);
 
-    if (this.shotQueue > 0) {
-      this.shotTimer -= delta;
+  if (this.shotQueue > 0) {
+    this.shotTimer -= delta;
 
-      if (this.shotTimer <= 0) {
-        const dir=new THREE.Vector3();
-        const success = this.fireOne();
-        if (success) this.onShoot(this.leftOrRight,dir);
-        this.shotQueue--;
-        this.shotTimer = this.delayBetweenShots;
-      }
+    if (this.shotTimer <= 0) {
+      const dir = this.fireOne(); 
+      if (dir) this.onShoot(this.leftOrRight, dir)
+      this.shotQueue--;
+      this.shotTimer = this.delayBetweenShots;
     }
   }
+}
 
 
      private fireOne():THREE.Vector3 | null {
