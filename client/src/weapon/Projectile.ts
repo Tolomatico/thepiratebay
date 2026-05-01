@@ -4,6 +4,7 @@ export class Projectile {
   position: THREE.Vector3;
   velocity: THREE.Vector3;
   age = 0;
+  id: string;
   lifetime = 5000;
   alive = true;
   damage: number;
@@ -13,12 +14,14 @@ export class Projectile {
     position: THREE.Vector3,
     direction: THREE.Vector3,
     damage: number,
-    instanceIndex?: number
+    instanceIndex: number,
+    id: string
   ) {
     this.position = position.clone();
-    this.velocity = direction.clone().normalize().multiplyScalar(0.2);
+    this.velocity = direction.clone().normalize().multiplyScalar(0.12);
     this.damage = damage;
     this.instanceIndex = instanceIndex;
+    this.id = id;
   }
 
   updatePosition(delta: number) {

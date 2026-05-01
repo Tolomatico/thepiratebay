@@ -27,15 +27,15 @@ export class Boat {
   private dimensions!: THREE.Vector3;
   private explosions: Explosion[] = [];
  
-  private onShoot: (type: "front" | "left" | "right", direction: THREE.Vector3) => void
+  private onShoot: (type: "front" | "left" | "right", direction: THREE.Vector3,id:string) => void
    
   
   constructor(
       scene: THREE.Scene,
       modelManager: ModelManager,
       ocean: Ocean,
-      onShoot: (type: "front" | "left" | "right", direction: THREE.Vector3) => void,
-      
+      onShoot: (type: "front" | "left" | "right", direction: THREE.Vector3,id:string) => void,
+      registry?: Map<string, Projectile>
     ) {
         this.model=null as unknown as THREE.Object3D;
         this.scene=scene
@@ -50,19 +50,24 @@ export class Boat {
 this.frontCanon = new FrontCanon(
   this.scene, 
   this.container,
-  (type,direction) => this.onShoot(type,direction)
+  (type,direction,id) => this.onShoot(type,direction,id),
+  registry
 );
 this.leftCanon = new SideCanon(
   this.scene, 
   this.container,
-  (type,direction) => this.onShoot(type,direction),
-  "left"
+  (type,direction,id) => this.onShoot(type,direction,id),
+  "left",
+  undefined,
+  registry
 );
 this.rightCanon = new SideCanon(
   this.scene, 
   this.container,
-  (type,direction) => this.onShoot(type,direction),
-  "right"
+  (type,direction,id) => this.onShoot(type,direction,id),
+  "right",
+  undefined,
+  registry
 );
        
       
@@ -125,9 +130,9 @@ async loadModel( ) {
   box.getSize(size);
 
   // 2️⃣ definir tamaño objetivo (como tu caja roja)
-  const targetWidth =5;
-  const targetHeight = 5;
-  const targetDepth =5;
+  const targetWidth =10;
+  const targetHeight = 10;
+  const targetDepth =10;
 
   const scaleX = targetWidth / size.x;
   const scaleY = targetHeight / size.y;
@@ -170,7 +175,6 @@ get position(): THREE.Vector3 {
   const twoPi = Math.PI * 2;
   return ((angle % twoPi) + twoPi) % twoPi;
 }
-
 
 
     public update(input:InputManager, time: number,delta:number){
@@ -234,8 +238,8 @@ this.container.position.z += Math.cos(this.container.rotation.y) * this.speed;
 this.speed *= 0.99;  
 
 const waveY = this.ocean.getWaveHeight(this.container.position.x, this.container.position.z, time);
+this.container.position.y = waveY - this.size?.y/10; 
 
-this.container.position.y = waveY - this.size?.y/8
 // puntos adelante y atrás para calcular inclinación
 const front = this.ocean.getWaveHeight(
   this.container.position.x + Math.sin(this.container.rotation.y) * 2,

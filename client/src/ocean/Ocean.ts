@@ -3,9 +3,9 @@ import { Water } from 'three/examples/jsm/objects/Water.js';
 
 export class Ocean {
   private water: Water;
-  private waveHeight = 0.005;
-  private waveSpeed = 0.0005;
-  private waveLength = 0.03;
+  private waveHeight = 0.001; // Olas más visibles
+  private waveSpeed = 0.0005;  // Velocidad ajustada para el tiempo en ms
+  private waveLength = 0.1; // Longitud de onda más corta para ver más picos
 
   constructor(scene: THREE.Scene) {
     const geometry = new THREE.PlaneGeometry(200, 200, 200, 200);

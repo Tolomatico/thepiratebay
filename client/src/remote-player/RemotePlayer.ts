@@ -2,6 +2,7 @@ import * as THREE from "three";
 import type { ModelManager } from "../model/ModelManager";
 import  { SideCanon } from "../weapon/SideCanon";
 import { FrontCanon } from "../weapon/FrontCanon";
+import type { Projectile } from "../weapon/Projectile";
 
 export class RemotePlayer {
   private visualBox: THREE.Group;
@@ -10,7 +11,7 @@ export class RemotePlayer {
   private scene: THREE.Scene
   private modelManager: ModelManager
   private id:string
-   private hitboxSize = { x: 5, y: 5, z: 5 }; // mismo tamaño que el modelo
+   private hitboxSize = { x: 10, y: 10, z: 10 }; // mismo tamaño que el modelo
   
 
   // Weapons
@@ -21,7 +22,8 @@ export class RemotePlayer {
   constructor(
     scene: THREE.Scene,
     modelManager: ModelManager,
-    id:string
+    id:string,
+    registry?: Map<string, Projectile>
   ) {
     this.id=id
     this.modelManager=modelManager
@@ -32,9 +34,9 @@ export class RemotePlayer {
     scene.add(this.container);
 
     this.loadModel();
-    this.frontCanon = new FrontCanon(this.scene, this.container,() => this.onShoot("front"));
-    this.leftCanon = new SideCanon(this.scene, this.container,() => this.onShoot("left"), "left");
-    this.rightCanon = new SideCanon(this.scene, this.container,() => this.onShoot("right"), "right");
+    this.frontCanon = new FrontCanon(this.scene, this.container,() => this.onShoot("front"), registry);
+    this.leftCanon = new SideCanon(this.scene, this.container,() => this.onShoot("left"), "left", undefined, registry);
+    this.rightCanon = new SideCanon(this.scene, this.container,() => this.onShoot("right"), "right", undefined, registry);
   }
 
   private onShoot(type: "left" | "right" | "front") {
@@ -58,12 +60,12 @@ containsPoint(point: { x: number; y: number; z: number }): boolean {
   );
 }
 
-shoot(type: "front" | "left" | "right") {
+shoot(type: "front" | "left" | "right", projectileId: string) {
   this.container.updateMatrixWorld(true);
   
-  if (type === "front") this.frontCanon.forceShoot();
-  if (type === "left") this.leftCanon.forceShoot();
-  if (type === "right") this.rightCanon.forceShoot();
+  if (type === "front") this.frontCanon.shootSingle(projectileId);
+  if (type === "left") this.leftCanon.shootSingle(projectileId);
+  if (type === "right") this.rightCanon.shootSingle(projectileId);
 }
 
 
@@ -78,9 +80,9 @@ shoot(type: "front" | "left" | "right") {
    box.getSize(size);
  
    // 2️⃣ definir tamaño objetivo (como tu caja roja)
-   const targetWidth =5;
-   const targetHeight = 5;
-   const targetDepth =5;
+   const targetWidth =10;
+   const targetHeight = 10;
+   const targetDepth =10;
  
    const scaleX = targetWidth / size.x;
    const scaleY = targetHeight / size.y;

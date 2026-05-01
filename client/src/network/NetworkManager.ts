@@ -16,8 +16,8 @@ export class NetworkManager {
     socket: Socket;
 
     constructor() {
-        this.socket = io(`https://thepiratebay.onrender.com`);
-        //this.socket = io(`http://localhost:3001`);
+       // this.socket = io(`https://thepiratebay.onrender.com`);
+        this.socket = io(`http://localhost:3001`);
         this.setupEvents();
     }
 
@@ -53,15 +53,17 @@ onPlayerJoined(callback: (data: { id: string }) => void) {
   position: { x: number; y: number; z: number };
   direction: { x: number; y: number; z: number };
   damage: number;
+  projectileId: string;
 }) {
   this.socket.emit("playerShoot", data);
 }
 
-onPlayerDamaged(callback: (data: { id: string; damage: number; health: number }) => void) {
+onPlayerDamaged(callback: (data: { id: string; damage: number; health: number,projectileId:string }) => void) {
   this.socket.on("playerDamaged", callback);
+  
 }
 
-onPlayerShoot(callback: (data: { id: string; type: "front" | "left" | "right" }) => void) {
+onPlayerShoot(callback: (data: { id: string; type: "front" | "left" | "right", projectileId: string }) => void) {
   this.socket.on("playerShoot", (data) => {
   callback(data);
 });

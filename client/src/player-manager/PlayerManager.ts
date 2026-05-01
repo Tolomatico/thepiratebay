@@ -1,6 +1,7 @@
 import type { ModelManager } from "../model/ModelManager";
 import { RemotePlayer } from "../remote-player/RemotePlayer";
 import * as THREE from "three";
+import type { Projectile } from "../weapon/Projectile";
 
 interface PlayerData {
     id: string;
@@ -12,15 +13,17 @@ export class PlayerManager {
     private scene: THREE.Scene;
     private modelManager: ModelManager;
     private players:Map<string,RemotePlayer> = new Map();
+    private projectileRegistry: Map<string, Projectile>;
 
-    constructor(scene: THREE.Scene, modelManager: ModelManager) {
+    constructor(scene: THREE.Scene, modelManager: ModelManager, projectileRegistry: Map<string, Projectile>) {
         this.scene = scene;
         this.modelManager = modelManager;
+        this.projectileRegistry = projectileRegistry;
     }
 
     addPlayer(id: string) {
         if (!this.players.has(id)) {
-            const remotePlayer = new RemotePlayer(this.scene, this.modelManager, id);
+            const remotePlayer = new RemotePlayer(this.scene, this.modelManager, id, this.projectileRegistry);
             this.players.set(id, remotePlayer);
         }
     }
@@ -48,5 +51,4 @@ export class PlayerManager {
     getPlayer(id: string) {
         return this.players.get(id);
     }
-    
 }

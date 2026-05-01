@@ -51,7 +51,7 @@ private checkCollisions(
       const enemyBox = enemy.getHitbox();
       if (enemyBox.containsPoint(projectile.getPosition())) {
         enemy.takeDamage(projectile.damage);
-        projectile.destroy();
+        //projectile.destroy();
         break;
       }
     }
@@ -61,7 +61,7 @@ private checkCollisions(
   for (const projectile of enemyProjectiles) {
     if (playerHitbox.containsPoint(projectile.getPosition())) {
       playerTakeDamage(projectile.damage);
-      projectile.destroy();
+     // projectile.destroy();
     }
   }
 }
