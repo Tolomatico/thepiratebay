@@ -16,8 +16,9 @@ export class NetworkManager {
     socket: Socket;
 
     constructor() {
-       // this.socket = io(`https://thepiratebay.onrender.com`);
-        this.socket = io(`http://localhost:3001`);
+        this.socket = io(`https://thepiratebay.onrender.com`);
+       
+       //this.socket = io(`http://localhost:3001`);
         this.setupEvents();
     }
 

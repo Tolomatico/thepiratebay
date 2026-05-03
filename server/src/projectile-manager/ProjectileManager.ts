@@ -43,13 +43,15 @@ export class ProjectileManager {
       for (const player of players) {
         if (player.id === projectile.ownerId) continue; 
 
-        const dx = projectile.position.x - player.position.x;
-        const dy = projectile.position.y - player.position.y;
-        const dz = projectile.position.z - player.position.z;
-        const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        const hitboxSize = { x: 15, y: 15, z: 15 };
+        const isHit = 
+          Math.abs(projectile.position.x - player.position.x) < hitboxSize.x / 2 &&
+          Math.abs(projectile.position.y - (player.position.y + 3)) < hitboxSize.y / 2 &&
+          Math.abs(projectile.position.z - player.position.z) < hitboxSize.z / 2;
  
-        if (distance < 2.5) { // hitRadius
-         player.takeDamage(projectile.damage);
+        if (isHit) { 
+          console.log(`Impacto detectado en server: Proyectil ${projectile.id} contra Jugador ${player.id}`);
+          player.takeDamage(projectile.damage);
            projectile.kill();
           projectile.age = projectile.lifetime + 5; // matar proyectil
          hits.push({ 

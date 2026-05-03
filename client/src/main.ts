@@ -112,6 +112,7 @@ class Game {
       this.projectileRegistry.get(data.projectileId)?.kill();
       
       if (data.id === this.networkManager.socket.id) {
+        this.soundManager.playHitSound();
         this.boat.takeDamage(data.damage);
       } else {
         const remotePlayer = this.playerManager.getPlayer(data.id);

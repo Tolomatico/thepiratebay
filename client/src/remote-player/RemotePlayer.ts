@@ -11,7 +11,8 @@ export class RemotePlayer {
   private scene: THREE.Scene
   private modelManager: ModelManager
   private id:string
-   private hitboxSize = { x: 10, y: 10, z: 10 }; // mismo tamaño que el modelo
+    private hitboxSize = { x: 10, y: 10, z: 10 }; // mismo tamaño que el modelo
+    private hitbox: THREE.Box3 = new THREE.Box3();
   
   // Health
   public health: number = 500;
@@ -34,6 +35,14 @@ export class RemotePlayer {
     this.visualBox = new THREE.Group();
     this.container = new THREE.Group();
     this.container.add(this.visualBox);
+
+    // Hitbox visualizer
+    const hitboxGeom = new THREE.BoxGeometry(10, 10, 10);
+    const hitboxMat = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true, visible: true });
+    const hitboxMesh = new THREE.Mesh(hitboxGeom, hitboxMat);
+    hitboxMesh.position.y = 5;
+    this.container.add(hitboxMesh);
+
     scene.add(this.container);
 
     this.loadModel();
@@ -63,6 +72,10 @@ containsPoint(point: { x: number; y: number; z: number }): boolean {
   );
 }
 
+getHitbox(): THREE.Box3 {
+  return this.hitbox.setFromObject(this.container);
+}
+
 shoot(type: "front" | "left" | "right", projectileId: string) {
   this.container.updateMatrixWorld(true);
   
@@ -75,7 +88,7 @@ shoot(type: "front" | "left" | "right", projectileId: string) {
  async loadModel( ) {
 
 
-    this.model = await this.modelManager.load("/models/holandes.glb");
+    this.model = await this.modelManager.load("/models/pirate.glb");
  
    // 1️⃣ bounding inicial
    let box = new THREE.Box3().setFromObject(this.model);

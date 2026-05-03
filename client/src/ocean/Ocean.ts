@@ -3,9 +3,9 @@ import { Water } from 'three/examples/jsm/objects/Water.js';
 
 export class Ocean {
   private water: Water;
-  private waveHeight = 0.001; // Olas más visibles
-  private waveSpeed = 0.0005;  // Velocidad ajustada para el tiempo en ms
-  private waveLength = 0.1; // Longitud de onda más corta para ver más picos
+  private waveHeight = 0; // Olas más visibles
+  private waveSpeed = 0;  // Velocidad ajustada para el tiempo en ms
+  private waveLength = 0; // Longitud de onda más corta para ver más picos
 
   constructor(scene: THREE.Scene) {
     const geometry = new THREE.PlaneGeometry(200, 200, 200, 200);
@@ -19,7 +19,7 @@ export class Ocean {
           texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
         }
       ),
-      sunDirection: new THREE.Vector3(1, 1, 0).normalize(),
+      sunDirection: new THREE.Vector3(1, 0, 0).normalize(),
       sunColor: 0xffffff,
       waterColor: 0x001e0f,
       distortionScale: 3.7,

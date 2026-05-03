@@ -6,6 +6,7 @@ import { FrontCanon } from '../weapon/FrontCanon';
 import{ SideCanon } from '../weapon/SideCanon';
 import type { Projectile } from '../weapon/Projectile';
 import { Explosion } from '../explosion/Explosion';
+import { SoundManager } from '../soundmanager/SoundManager';
 
 export class Boat {
   private modelManager: ModelManager;
@@ -26,6 +27,8 @@ export class Boat {
   private maxBoatHealth = 500;
   private dimensions!: THREE.Vector3;
   private explosions: Explosion[] = [];
+  private hitbox: THREE.Box3 = new THREE.Box3();
+  private soundManager: SoundManager;
  
   private onShoot: (type: "front" | "left" | "right", direction: THREE.Vector3,id:string) => void
    
@@ -37,6 +40,7 @@ export class Boat {
       onShoot: (type: "front" | "left" | "right", direction: THREE.Vector3,id:string) => void,
       registry?: Map<string, Projectile>
     ) {
+        this.soundManager = new SoundManager();
         this.model=null as unknown as THREE.Object3D;
         this.scene=scene
         this.modelManager=modelManager
@@ -45,6 +49,16 @@ export class Boat {
         this.onShoot=onShoot;
         this.visualBox = new THREE.Group();
         this.container.add(this.visualBox)
+
+        // Hitbox visualizer
+        const hitboxGeom = new THREE.BoxGeometry(10, 10, 10);
+        const hitboxMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true, visible: true });
+        const hitboxMesh = new THREE.Mesh(hitboxGeom, hitboxMat);
+        // El modelo está centrado de tal forma que box.min.y es 0 en el visualBox
+        // targetHeight es 10, así que el centro de la caja debe estar en y = 5
+        hitboxMesh.position.y = 5;
+        this.container.add(hitboxMesh);
+
         this.scene.add(this.container)
 
 this.frontCanon = new FrontCanon(
@@ -88,6 +102,7 @@ this.rightCanon = new SideCanon(
     }
 
     explode(){
+   this.soundManager.playDestroySound();
       this.explosions.push(new Explosion(this.scene, this.container.position));
       this.scene.remove(this.container)
     }
@@ -122,7 +137,7 @@ this.rightCanon = new SideCanon(
         ];
 }
 async loadModel( ) {
-  this.model = await this.modelManager.load("/models/holandes.glb");
+  this.model = await this.modelManager.load("/models/pirate.glb");
 
   // 1️⃣ bounding inicial
   let box = new THREE.Box3().setFromObject(this.model);
@@ -160,7 +175,7 @@ async loadModel( ) {
 }
 
 getHitbox(): THREE.Box3 {
-  return new THREE.Box3().setFromObject(this.container) 
+  return this.hitbox.setFromObject(this.container);
 }
 getObject3D(): THREE.Object3D {
   return this.container;
@@ -255,6 +270,8 @@ const back = this.ocean.getWaveHeight(
 // inclinación suavizada con lerp
 const targetPitch = (front - back) * 0.1;
 this.container.rotation.x += (targetPitch - this.container.rotation.x) * 0.1;
+
+   
 
     }
 }
