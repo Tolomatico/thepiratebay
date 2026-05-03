@@ -11,7 +11,7 @@ import  { NetworkManager } from './network/NetworkManager';
 import  { PlayerManager } from './player-manager/PlayerManager';
 import { Projectile } from './weapon/Projectile';
 
-class Game {
+export class GameEngine {
   private scene: THREE.Scene
   private camera: THREE.PerspectiveCamera
   private renderer: THREE.WebGLRenderer
@@ -31,7 +31,11 @@ class Game {
   private playerManager: PlayerManager;
   private projectileRegistry = new Map<string, Projectile>();
 
-  constructor() {
+  // Recibe el contenedor donde montar el canvas
+  private container: HTMLDivElement;
+
+  constructor(container: HTMLDivElement) {
+    this.container = container;
     this.soundManager=new SoundManager()
     this.modelManager = new ModelManager();
     this.scene = new THREE.Scene()
@@ -43,7 +47,7 @@ class Game {
 
     this.renderer = new THREE.WebGLRenderer()
     this.renderer.setSize(window.innerWidth, window.innerHeight)
-    document.body.appendChild(this.renderer.domElement)
+    this.container.appendChild(this.renderer.domElement)
     
     const light = new THREE.DirectionalLight(0xffffff, 1.5);
     light.position.set(10, 20, 10);
@@ -145,6 +149,10 @@ this.networkManager.onPlayerJoined((data) => {
 });
   }
 
+  dispose() {
+  this.renderer.dispose()
+}
+
 
   animate =()=>{
     // Actualizar el tiempo
@@ -188,5 +196,3 @@ this.networkManager.onPlayerJoined((data) => {
     requestAnimationFrame(this.animate)
   }
 }
-
-new Game()
