@@ -52,7 +52,6 @@ export class RemotePlayer {
   }
 
   private onShoot(type: "left" | "right" | "front") {
-    console.log("disparo del jugador remoto",type)
   // no hacemos nada, no hay sonido ni emisión
 }
 
@@ -141,7 +140,6 @@ shoot(type: "front" | "left" | "right", projectileId: string) {
   }
   takeDamage(damage: number) {
     this.health -= damage;
-    console.log(`RemotePlayer ${this.id} recibió ${damage} daño. Vida restante: ${this.health}`);
   }
 
   getPosition(): THREE.Vector3 {

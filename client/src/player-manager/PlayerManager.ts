@@ -38,8 +38,13 @@ export class PlayerManager {
 
     updatePlayer(data: PlayerData) {
         const player = this.players.get(data.id);
-        if (player) {
-            player.updatePosition(data.position, data.rotation);
+        if (!player) {
+            // El jugador no existe, añadirlo primero
+            this.addPlayer(data.id);
+        }
+        const existingPlayer = this.players.get(data.id);
+        if (existingPlayer && data.position && data.rotation) {
+            existingPlayer.updatePosition(data.position, data.rotation);
         }
     }
     update(delta: number) {

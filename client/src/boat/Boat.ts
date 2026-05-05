@@ -137,7 +137,7 @@ this.rightCanon = new SideCanon(
         ];
 }
 async loadModel( ) {
-  this.model = await this.modelManager.load("/models/pirate.glb");
+  this.model = await this.modelManager.load("/models/english.glb");
 
   // 1️⃣ bounding inicial
   let box = new THREE.Box3().setFromObject(this.model);
@@ -145,9 +145,9 @@ async loadModel( ) {
   box.getSize(size);
 
   // 2️⃣ definir tamaño objetivo (como tu caja roja)
-  const targetWidth =10;
-  const targetHeight = 10;
-  const targetDepth =10;
+  const targetWidth =15;
+  const targetHeight = 15;
+  const targetDepth =15;
 
   const scaleX = targetWidth / size.x;
   const scaleY = targetHeight / size.y;
@@ -171,7 +171,7 @@ async loadModel( ) {
 
 
   this.visualBox.add(this.model);
-  this.visualBox.rotation.y = -Math.PI/2  ;
+  this.visualBox.rotation.y = Math.PI + Math.PI  ;
 }
 
 getHitbox(): THREE.Box3 {

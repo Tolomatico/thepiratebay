@@ -36,21 +36,20 @@ export class ProjectileManager {
   private checkCollisions(hits: { id: string; damage: number; health: number,projectileId:string }[]) {
     const players = this.gameManager.getState();
     
-
     for (const projectile of this.projectiles) {
       if (projectile.age > projectile.lifetime) continue; // Si ya murió, ignorar
 
       for (const player of players) {
         if (player.id === projectile.ownerId) continue; 
 
-        const hitboxSize = { x: 15, y: 15, z: 15 };
+        const hitboxSize = { x: 5, y: 5, z: 5 };
         const isHit = 
           Math.abs(projectile.position.x - player.position.x) < hitboxSize.x / 2 &&
           Math.abs(projectile.position.y - (player.position.y + 3)) < hitboxSize.y / 2 &&
           Math.abs(projectile.position.z - player.position.z) < hitboxSize.z / 2;
  
         if (isHit) { 
-          console.log(`Impacto detectado en server: Proyectil ${projectile.id} contra Jugador ${player.id}`);
+    
           player.takeDamage(projectile.damage);
            projectile.kill();
           projectile.age = projectile.lifetime + 5; // matar proyectil

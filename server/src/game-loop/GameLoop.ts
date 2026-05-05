@@ -10,7 +10,7 @@ export class GameLoop {
   private mode: GameLoopMode;
   private lastTickTime: number = 0;
   private accumulatedTime: number = 0;
-  private readonly fixedDelta = 1000 / 120; // ~16.67ms por tick
+  private readonly fixedDelta = 1000 / 60; // ~16.67ms por tick (60 TPS)
   private readonly tickInterval = this.fixedDelta;
   private onTick: (hits: any[]) => void;
   constructor(mode: GameLoopMode = "variable",gameManager:GameManager,onTick: (hits: any[]) => void) {

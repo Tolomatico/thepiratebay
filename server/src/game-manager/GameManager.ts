@@ -10,11 +10,18 @@ export class GameManager {
     this.projectileManager = new ProjectileManager(this);
   }
 
-  addPlayer(id: string): Player {
-    const player = new Player(id);
-    this.players.set(id, player);
-    return player;
-  }
+  
+
+  getPlayer(id: string): Player | undefined {
+  return this.players.get(id);
+}
+
+  addPlayer(id: string, lobbyId?: string): Player {
+  const player = new Player(id);
+  if (lobbyId) player.lobbyId = lobbyId;
+  this.players.set(id, player);
+  return player;
+}
 
   removePlayer(id: string) {
     this.players.delete(id);

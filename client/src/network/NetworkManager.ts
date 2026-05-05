@@ -14,11 +14,12 @@ interface PlayerDisconnectedData {
 }
 export class NetworkManager {
     socket: Socket;
+    private currentLobbyId: string | null = null;
 
     constructor() {
-        this.socket = io(`https://thepiratebay.onrender.com`);
+        //this.socket = io(`https://thepiratebay.onrender.com`);
        
-       //this.socket = io(`http://localhost:3001`);
+       this.socket = io(`http://localhost:3001`);
         this.setupEvents();
     }
 
@@ -26,20 +27,72 @@ export class NetworkManager {
         this.socket.on("connect", () => {
             console.log(`conectado al servidor: ${this.socket.id}`);
         });
-  }
+    }
+
+    onLobbyError(callback: (message: string) => void) {
+        this.socket.on("lobbyError", (data) => {
+    callback(data);
+  });
+    }
+
+    // pedir lista de lobbys
+    getLobbies(callback: (lobbies: any[]) => void) {
+  this.socket.emit("getLobbies");
+  this.socket.once("lobbies", callback);
+}
+
+// crear lobby
+createLobby(name: string,lobbyName: string, maxPlayers: number, callback: (lobby: any) => void) {
+  this.socket.emit("createLobby", { name,lobbyName, maxPlayers });
+  this.socket.once("lobbyCreated", callback);
+}
+
+// unirse a lobby
+joinLobby(lobbyId: string, callback: (lobby: any) => void) {
+  this.socket.once("lobbyJoined", callback);
+   this.socket.once("lobbyError", (msg) => {
+    if(msg.includes("error")){
+      this.socket.off("lobbyJoined", callback);
+    }
+  });
+  this.socket.emit("joinLobby", { lobbyId });
+}
+
+emitReady() {
+  this.socket.emit("playerReady");
+}
+
+// salir del lobby
+leaveLobby(lobbyId: string) {
+  this.socket.emit("leaveLobby", { lobbyId });
+}
+
+// escuchar actualizaciones
+onLobbiesUpdated(callback: (lobbies: any[]) => void) {
+  this.socket.on("lobbiesUpdated", callback);
+}
+
+onLobbyUpdated(callback: (lobby: any) => void) {
+  this.socket.on("lobbyUpdated", callback);
+}
 
 
 onCurrentPlayers(callback: (data: PlayerMovedData[]) => void) {
   this.socket.on("currentPlayers", callback);
 }
 
-onPlayerJoined(callback: (data: { id: string }) => void) {
+onPlayerJoined(callback: (data: { id: string; position?: { x: number; y: number; z: number }; rotation?: { y: number } }) => void) {
   this.socket.on("playerJoined", callback);
 }
 
   emitMove(data: MoveData) {
-    this.socket.emit("playerMove", data);
+      if (!this.currentLobbyId) return
+    this.socket.emit("playerMove", {...data,lobbyId:this.currentLobbyId});
   }
+
+  setLobbyId(id: string) {
+  this.currentLobbyId = id;
+}
 
   onPlayerMoved(callback: (data: PlayerMovedData) => void) {
     this.socket.on("playerMoved", callback);

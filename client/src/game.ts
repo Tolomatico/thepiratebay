@@ -7,9 +7,9 @@ import { Controlls } from "./controlls/Controlls"
 import  { EnemyManager } from './bots/EnemyManager';
 import { HUD } from './hud/Hud';
 import  { SoundManager } from './soundmanager/SoundManager';
-import  { NetworkManager } from './network/NetworkManager';
 import  { PlayerManager } from './player-manager/PlayerManager';
 import { Projectile } from './weapon/Projectile';
+import type { NetworkManager } from './network/NetworkManager';
 
 export class GameEngine {
   private scene: THREE.Scene
@@ -34,8 +34,9 @@ export class GameEngine {
   // Recibe el contenedor donde montar el canvas
   private container: HTMLDivElement;
 
-  constructor(container: HTMLDivElement) {
+  constructor(container: HTMLDivElement,networkManager: NetworkManager) {
     this.container = container;
+    this.networkManager = networkManager;
     this.soundManager=new SoundManager()
     this.modelManager = new ModelManager();
     this.scene = new THREE.Scene()
@@ -60,7 +61,6 @@ export class GameEngine {
     this.scene.add(hemi);
 
     // Multiplayer
-    this.networkManager = new NetworkManager();
     this.playerManager = new PlayerManager(this.scene, this.modelManager, this.projectileRegistry);
 
     this.hud = new HUD(this.camera);
@@ -177,13 +177,6 @@ this.networkManager.onPlayerJoined((data) => {
     this.ocean.update(time)
     this.playerManager.update(delta);
     this.controls.update()
-  //   this.enemyManager.update( time,
-  // this.boat.getActiveProjectiles(),
-  // delta,
-  // this.boat.position,
-  // this.boat.velocity,
-  // this.boat.getHitbox(),
-  // (damage) => this.boat.takeDamage(damage))
     this.hud.update({ 
       player: {playerHealth:this.boat.health, maxPlayerHealth:this.boat.maxHealth}, 
       enemyCount: this.enemyManager.enemies.length + this.playerManager.getPlayers().length,

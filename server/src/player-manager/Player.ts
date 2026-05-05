@@ -4,7 +4,7 @@ export class Player {
   rotation: { y: number };
   maxHealth: number = 500;
   health: number = 500;
-  
+  lobbyId: string | null = null;
   constructor(id: string) {
     this.id = id;
     this.position = { x: 0, y: 0, z: 0 };
