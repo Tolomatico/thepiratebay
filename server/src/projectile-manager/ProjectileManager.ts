@@ -46,7 +46,6 @@ private checkCollisions(hits: { id: string; damage: number; health: number,proje
             continue; 
         }
           if (player.lobbyId !== projectile.lobbyId) {
-        console.log(`lobby mismatch: player=${player.lobbyId} proj=${projectile.lobbyId}`);
         continue;
       }
         const hitboxSize = { x: 10, y: 10, z: 10 };

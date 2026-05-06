@@ -112,7 +112,6 @@ export class GameEngine {
        this.playerManager.updatePlayer(data);
     });
     this.networkManager.onPlayerDamaged((data) => {
-      console.log("Player damaged:", data);
       this.projectileRegistry.get(data.projectileId)?.kill();
       
       if (data.id === this.networkManager.socket.id) {

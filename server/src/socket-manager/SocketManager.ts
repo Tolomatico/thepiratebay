@@ -135,10 +135,10 @@ socket.on("playerShoot", (data: {
              }) => {
                     const lobbyId = [...socket.rooms].find(r => r !== socket.id);
                     if (!lobbyId) return;
-                    
+                   console.log("dir servidor:", Math.sqrt(data.direction.x**2 + data.direction.y**2 + data.direction.z**2), data.direction);
                     // Log de la dirección recibida
                     const dirLength = Math.sqrt(data.direction.x * data.direction.x + data.direction.y * data.direction.y + data.direction.z * data.direction.z);
-  
+                  
                     this.gameManager.addProjectile(data.position, data.direction, socket.id, data.damage, data.projectileId, lobbyId);
                    
                     // Notificar a los del lobby que alguien disparó

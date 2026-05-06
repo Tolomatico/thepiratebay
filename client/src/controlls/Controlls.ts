@@ -5,7 +5,7 @@ export class Controlls{
     private controls: OrbitControls;
     private target: THREE.Object3D;
     private camera: THREE.PerspectiveCamera;
-    private offset: THREE.Vector3 = new THREE.Vector3(0, 8, 15);
+    private offset: THREE.Vector3 = new THREE.Vector3(0, 20, 30);
     private lastTargetPos: THREE.Vector3;
 
     constructor(camera: THREE.PerspectiveCamera, domElement: HTMLElement, target: THREE.Object3D) {
@@ -17,7 +17,7 @@ export class Controlls{
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.05;
         this.controls.screenSpacePanning = false;
-        this.controls.minDistance = 1;
+        this.controls.minDistance = 20;
         this.controls.maxDistance = 100;
         this.controls.maxPolarAngle = Math.PI / 2.1;
         this.controls.minPolarAngle = Math.PI / 6;

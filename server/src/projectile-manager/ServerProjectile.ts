@@ -32,7 +32,7 @@ export class ServerProjectile {
     } : { x: 0, y: 0, z: 0 };
     
     // Velocidad: 0.83 unidades/tick (~50 unidades/segundo)
-    const speed = 0.83;
+    const speed = 0.24
     this.velocity = {
       x: normalized.x * speed,
       y: normalized.y * speed,
@@ -45,12 +45,12 @@ export class ServerProjectile {
   }
 
   update(delta: number) {
-    // La velocidad ya está por tick, usar delta directamente
-    this.position.x += this.velocity.x;
-    this.position.y += this.velocity.y;
-    this.position.z += this.velocity.z;
-    this.age += delta;
-  }
+  const normalizedDelta = delta / 16.67; // ← normalizar a 60fpsw
+  this.position.x += this.velocity.x * normalizedDelta;
+  this.position.y += this.velocity.y * normalizedDelta;
+  this.position.z += this.velocity.z * normalizedDelta;
+  this.age += delta;
+}
 
   isAlive(): boolean {
     return this.age <= this.lifetime && !this.isDead;

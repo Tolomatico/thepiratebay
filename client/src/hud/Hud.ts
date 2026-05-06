@@ -131,6 +131,7 @@ export class HUD {
       bar.container.style.top = `${y}px`;
 
       const ratio = target.getHealthRatio();
+      if(ratio <= 0 )bar.container.style.display = 'none';
       bar.fill.style.width = `${ratio * 100}%`;
       
       // Color dinámico

@@ -3,6 +3,8 @@ import type { ModelManager } from "../model/ModelManager";
 import  { SideCanon } from "../weapon/SideCanon";
 import { FrontCanon } from "../weapon/FrontCanon";
 import type { Projectile } from "../weapon/Projectile";
+import { Explosion } from "../explosion/Explosion";
+import { SoundManager } from "../soundmanager/SoundManager";
 
 export class RemotePlayer {
   private visualBox: THREE.Group;
@@ -10,6 +12,8 @@ export class RemotePlayer {
   private model!: THREE.Object3D;
   private scene: THREE.Scene
   private modelManager: ModelManager
+  private explosions: Explosion[] = [];
+  private soundManager: SoundManager;
   private id:string
     private hitboxSize = { x: 10, y: 10, z: 10 }; // mismo tamaño que el modelo
     private hitbox: THREE.Box3 = new THREE.Box3();
@@ -30,18 +34,20 @@ export class RemotePlayer {
     registry?: Map<string, Projectile>
   ) {
     this.id=id
+    this.soundManager=new SoundManager();
     this.modelManager=modelManager
     this.scene=scene
     this.visualBox = new THREE.Group();
     this.container = new THREE.Group();
     this.container.add(this.visualBox);
 
-    // Hitbox visualizer
-    const hitboxGeom = new THREE.BoxGeometry(10, 10, 10);
-    const hitboxMat = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true, visible: true });
-    const hitboxMesh = new THREE.Mesh(hitboxGeom, hitboxMat);
-    hitboxMesh.position.y = 5;
-    this.container.add(hitboxMesh);
+
+    // // Hitbox visualizer
+    // const hitboxGeom = new THREE.BoxGeometry(10, 10, 10);
+    // const hitboxMat = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true, visible: true });
+    // const hitboxMesh = new THREE.Mesh(hitboxGeom, hitboxMat);
+    // hitboxMesh.position.y = 5;
+    // this.container.add(hitboxMesh);
 
     scene.add(this.container);
 
@@ -140,6 +146,15 @@ shoot(type: "front" | "left" | "right", projectileId: string) {
   }
   takeDamage(damage: number) {
     this.health -= damage;
+    if (this.health <= 0) {
+        this.health = 0;
+        this.explode()
+      }
+  }
+  explode(){
+    this.soundManager.playDestroySound();
+    this.explosions.push(new Explosion(this.scene, this.container.position));
+    this.scene.remove(this.container)
   }
 
   getPosition(): THREE.Vector3 {
@@ -154,5 +169,9 @@ shoot(type: "front" | "left" | "right", projectileId: string) {
     this.frontCanon.update(delta);
     this.leftCanon.update(delta);
     this.rightCanon.update(delta);
+    this.explosions = this.explosions.filter(exp => {
+    exp.update(delta);
+    return exp.isAlive();
+  });
   }
 }

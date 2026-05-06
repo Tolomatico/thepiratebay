@@ -16,10 +16,9 @@ export class FrontCanon extends WeaponSystem {
   const pos = new THREE.Vector3();
   this.origin.getWorldPosition(pos);
   pos.y += 3;
-
   const dir = new THREE.Vector3();
   this.origin.getWorldDirection(dir);
-
+console.log("dir cliente:", dir.length(), dir);
   const result = this.createProjectile(pos, dir);
   if (!result) return;
 

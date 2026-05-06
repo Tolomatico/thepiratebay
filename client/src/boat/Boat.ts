@@ -50,14 +50,14 @@ export class Boat {
         this.visualBox = new THREE.Group();
         this.container.add(this.visualBox)
 
-        // Hitbox visualizer
-        const hitboxGeom = new THREE.BoxGeometry(10, 10, 10);
-        const hitboxMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true, visible: true });
-        const hitboxMesh = new THREE.Mesh(hitboxGeom, hitboxMat);
-        // El modelo está centrado de tal forma que box.min.y es 0 en el visualBox
-        // targetHeight es 10, así que el centro de la caja debe estar en y = 5
-        hitboxMesh.position.y = 5;
-        this.container.add(hitboxMesh);
+        // // Hitbox visualizer
+        // const hitboxGeom = new THREE.BoxGeometry(10, 10, 10);
+        // const hitboxMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true, visible: true });
+        // const hitboxMesh = new THREE.Mesh(hitboxGeom, hitboxMat);
+        // // El modelo está centrado de tal forma que box.min.y es 0 en el visualBox
+        // // targetHeight es 10, así que el centro de la caja debe estar en y = 5
+        // hitboxMesh.position.y = 5;
+        // this.container.add(hitboxMesh);
 
         this.scene.add(this.container)
 
@@ -91,7 +91,7 @@ this.rightCanon = new SideCanon(
 
     takeDamage(amount: number) {
       this.boatHealth -= amount;
-      if (this.boatHealth < 0) {
+      if (this.boatHealth <= 0) {
         this.boatHealth = 0;
         this.explode()
       }
