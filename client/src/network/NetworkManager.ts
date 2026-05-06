@@ -86,7 +86,11 @@ onPlayerJoined(callback: (data: { id: string; position?: { x: number; y: number;
 }
 
   emitMove(data: MoveData) {
-      if (!this.currentLobbyId) return
+    if (!this.currentLobbyId) {
+      // Emitir sin lobbyId si no hay
+      this.socket.emit("playerMove", {...data, lobbyId: ""});
+      return;
+    }
     this.socket.emit("playerMove", {...data,lobbyId:this.currentLobbyId});
   }
 
@@ -102,15 +106,15 @@ onPlayerJoined(callback: (data: { id: string; position?: { x: number; y: number;
     this.socket.on("playerDisconnected", callback);
   }
 
- emitShoot(data: {
-  type: "front" | "left" | "right";
-  position: { x: number; y: number; z: number };
-  direction: { x: number; y: number; z: number };
-  damage: number;
-  projectileId: string;
-}) {
-  this.socket.emit("playerShoot", data);
-}
+emitShoot(data: {
+   type: "front" | "left" | "right";
+   position: { x: number; y: number; z: number };
+   direction: { x: number; y: number; z: number };
+   damage: number;
+   projectileId: string;
+ }) {
+   this.socket.emit("playerShoot", {...data, lobbyId: this.currentLobbyId || ""});
+ }
 
 onPlayerDamaged(callback: (data: { id: string; damage: number; health: number,projectileId:string }) => void) {
   this.socket.on("playerDamaged", callback);

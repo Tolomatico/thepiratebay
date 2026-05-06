@@ -84,13 +84,9 @@ this.rightCanon = new SideCanon(
   registry
 );
        
-      
        this.loadModel().then(() => {
             console.log("Barco cargado");
         });
-        
-     
-
     }
 
     takeDamage(amount: number) {

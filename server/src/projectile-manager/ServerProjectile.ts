@@ -6,23 +6,37 @@ export class ServerProjectile {
   age = 0;
   lifetime = 5000;
   id!: string;
+  lobbyId: string | null = null;
+  isDead = false;
 
   constructor(
     position: { x: number; y: number; z: number },
     direction: { x: number; y: number; z: number },
     ownerId: string,
     damage: number,
-    projectileId: string
+    projectileId: string,
+    lobbyId: string | null
   ) {
     this.position = { ...position };
     this.ownerId = ownerId;
     this.damage = damage;
     this.id = projectileId;
-const speed = 0.05 * 16.67; // velocidad por tick (16.67ms = 1 tick a 60 TPS)
+    this.lobbyId = lobbyId;
+    
+    // Normalizar la dirección
+    const length = Math.sqrt(direction.x * direction.x + direction.y * direction.y + direction.z * direction.z);
+    const normalized = length > 0 ? {
+      x: direction.x / length,
+      y: direction.y / length,
+      z: direction.z / length
+    } : { x: 0, y: 0, z: 0 };
+    
+    // Velocidad: 0.83 unidades/tick (~50 unidades/segundo)
+    const speed = 0.83;
     this.velocity = {
-      x: direction.x * speed,
-      y: direction.y * speed,
-      z: direction.z * speed,
+      x: normalized.x * speed,
+      y: normalized.y * speed,
+      z: normalized.z * speed,
     };
   }
 
@@ -39,6 +53,6 @@ const speed = 0.05 * 16.67; // velocidad por tick (16.67ms = 1 tick a 60 TPS)
   }
 
   isAlive(): boolean {
-    return this.age <= this.lifetime;
+    return this.age <= this.lifetime && !this.isDead;
   }
 }

@@ -19,14 +19,18 @@ export class SocketManager {
         this.setupEvents()
     }
 
-        emitHits(hits: { id: string; damage: number; health: number, projectileId: string }[]) {
+emitHits(hits: { id: string; damage: number; health: number, projectileId: string }[]) {
+        if (hits.length === 0) return;
         for (const hit of hits) {
             const player = this.gameManager.getPlayer(hit.id);
-            if (player?.lobbyId) {
-            this.io.to(player.lobbyId).emit("playerDamaged", hit);
+            const targetLobby = player?.lobbyId;
+            if (targetLobby) {
+                this.io.to(targetLobby).emit("playerDamaged", hit);
+            } else {
+                this.io.emit("playerDamaged", hit);
             }
         }
-        }
+    }
 
     
 
@@ -129,24 +133,20 @@ socket.on("playerShoot", (data: {
              damage: number;
              projectileId: string;
              }) => {
-                  
-          this.gameManager.addProjectile(data.position, data.direction, socket.id, data.damage,data.projectileId)
-          const lobbyId = [...socket.rooms].find(r => r !== socket.id);
-             
-             if (lobbyId) {
-             socket.to(lobbyId).emit("playerShoot", {
-                 id: socket.id,
-                 type: data.type,
-                 projectileId: data.projectileId
-             });
-             } else {
-               // Fallback: emitir a todos si no hay lobby
-               socket.broadcast.emit("playerShoot", {
-                 id: socket.id,
-                 type: data.type,
-                 projectileId: data.projectileId
-               });
-             }
+                    const lobbyId = [...socket.rooms].find(r => r !== socket.id);
+                    if (!lobbyId) return;
+                    
+                    // Log de la dirección recibida
+                    const dirLength = Math.sqrt(data.direction.x * data.direction.x + data.direction.y * data.direction.y + data.direction.z * data.direction.z);
+  
+                    this.gameManager.addProjectile(data.position, data.direction, socket.id, data.damage, data.projectileId, lobbyId);
+                   
+                    // Notificar a los del lobby que alguien disparó
+                    socket.to(lobbyId).emit("playerShoot", {
+                       id: socket.id,
+                       type: data.type,
+                       projectileId: data.projectileId
+                   });
              });
             // jugador se desconecta
             socket.on("disconnect", () => {

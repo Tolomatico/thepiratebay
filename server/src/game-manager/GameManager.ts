@@ -41,9 +41,10 @@ export class GameManager {
     direction: { x: number; y: number; z: number },
     ownerId: string,
     damage: number,
-    projectileId: string
+    projectileId: string,
+    lobbyId: string
   ) {
-    this.projectileManager.addProjectile(position, direction, ownerId, damage,projectileId);
+    this.projectileManager.addProjectile(position, direction, ownerId, damage,projectileId,lobbyId);
   }
 
 

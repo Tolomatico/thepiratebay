@@ -14,9 +14,10 @@ export class ProjectileManager {
     direction: { x: number; y: number; z: number },
     ownerId: string,
     damage: number,
-    projectileId: string
+    projectileId: string,
+    lobbyId:string
   ) {
-    this.projectiles.push(new ServerProjectile(position, direction, ownerId, damage,projectileId));
+    this.projectiles.push(new ServerProjectile(position, direction, ownerId, damage,projectileId,lobbyId));
   }
 
   update(delta: number): { id: string; damage: number; health: number, projectileId: string }[] {
@@ -33,33 +34,39 @@ export class ProjectileManager {
     return hits; // ← devuelve los impactos para que GameManager los emita
   }
 
-  private checkCollisions(hits: { id: string; damage: number; health: number,projectileId:string }[]) {
+private checkCollisions(hits: { id: string; damage: number; health: number,projectileId:string }[]) {
     const players = this.gameManager.getState();
     
     for (const projectile of this.projectiles) {
-      if (projectile.age > projectile.lifetime) continue; // Si ya murió, ignorar
+      if (projectile.age > projectile.lifetime || projectile.isDead) continue;
 
       for (const player of players) {
         if (player.id === projectile.ownerId) continue; 
-
-        const hitboxSize = { x: 5, y: 5, z: 5 };
-        const isHit = 
-          Math.abs(projectile.position.x - player.position.x) < hitboxSize.x / 2 &&
-          Math.abs(projectile.position.y - (player.position.y + 3)) < hitboxSize.y / 2 &&
-          Math.abs(projectile.position.z - player.position.z) < hitboxSize.z / 2;
- 
+        if (player.lobbyId !== projectile.lobbyId){     
+            continue; 
+        }
+          if (player.lobbyId !== projectile.lobbyId) {
+        console.log(`lobby mismatch: player=${player.lobbyId} proj=${projectile.lobbyId}`);
+        continue;
+      }
+        const hitboxSize = { x: 10, y: 10, z: 10 };
+        
+        const dx = Math.abs(projectile.position.x - player.position.x);
+        const dy = Math.abs(projectile.position.y - (player.position.y + 3));
+        const dz = Math.abs(projectile.position.z - player.position.z);
+        
+        const isHit = dx < hitboxSize.x / 2 && dy < hitboxSize.y / 2 && dz < hitboxSize.z / 2;
+        
         if (isHit) { 
-    
           player.takeDamage(projectile.damage);
-           projectile.kill();
-          projectile.age = projectile.lifetime + 5; // matar proyectil
-         hits.push({ 
-    id: player.id, 
-    damage: projectile.damage, 
-    health: player.health,
-    projectileId: projectile.id  
-  });
-  projectile.age = projectile.lifetime + 5;
+          projectile.isDead = true;
+          projectile.age = projectile.lifetime + 5;
+          hits.push({ 
+            id: player.id, 
+            damage: projectile.damage, 
+            health: player.health,
+            projectileId: projectile.id  
+          });
         }
       }
     }
