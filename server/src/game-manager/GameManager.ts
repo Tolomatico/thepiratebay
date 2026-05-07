@@ -10,7 +10,16 @@ export class GameManager {
     this.projectileManager = new ProjectileManager(this);
   }
 
-  
+respawnPlayer(id: string, position: { x: number; y: number; z: number }, lobbyId: string) {
+    const player = this.players.get(id);
+    if (!player) {
+      return null;
+    }
+    player.lobbyId = lobbyId;
+    player.position = position;
+    player.health = player.maxHealth;
+    return player;
+  }
 
   getPlayer(id: string): Player | undefined {
   return this.players.get(id);

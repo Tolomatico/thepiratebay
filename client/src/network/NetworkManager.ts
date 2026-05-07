@@ -18,7 +18,7 @@ export class NetworkManager {
 
     constructor() {
        //this.socket = io(`https://thepiratebay.onrender.com`);
-       this.socket = io(`http://localhost:3001`);
+       this.socket = io(`http://localhost:3000`);
         this.setupEvents();
     }
 
@@ -33,6 +33,15 @@ export class NetworkManager {
     callback(data);
   });
     }
+
+    emitRespawn(position: { x: number; y: number; z: number }) {
+  this.socket.emit("playerRespawn", { position, lobbyId: this.currentLobbyId });
+}
+
+   onPlayerRespawn(callback: (data: { id: string; position: { x: number; y: number; z: number }, lobbyId: string }) => void) {
+    this.socket.on("playerRespawn", callback);
+   }
+
 
     // pedir lista de lobbys
     getLobbies(callback: (lobbies: any[]) => void) {

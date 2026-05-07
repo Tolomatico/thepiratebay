@@ -29,6 +29,7 @@ export class Boat {
   private explosions: Explosion[] = [];
   private hitbox: THREE.Box3 = new THREE.Box3();
   private soundManager: SoundManager;
+  private onDeath: () => void
  
   private onShoot: (type: "front" | "left" | "right", direction: THREE.Vector3,id:string) => void
    
@@ -38,8 +39,11 @@ export class Boat {
       modelManager: ModelManager,
       ocean: Ocean,
       onShoot: (type: "front" | "left" | "right", direction: THREE.Vector3,id:string) => void,
-      registry?: Map<string, Projectile>
+      onDeath: () => void,
+      registry?: Map<string, Projectile>,
+    
     ) {
+       this.onDeath = onDeath
         this.soundManager = new SoundManager();
         this.model=null as unknown as THREE.Object3D;
         this.scene=scene
@@ -85,7 +89,6 @@ this.rightCanon = new SideCanon(
 );
        
        this.loadModel().then(() => {
-            console.log("Barco cargado");
         });
     }
 
@@ -97,10 +100,13 @@ this.rightCanon = new SideCanon(
       }
     }
 
+    
+
     explode(){
    this.soundManager.playDestroySound();
       this.explosions.push(new Explosion(this.scene, this.container.position));
       this.scene.remove(this.container)
+      this.onDeath()
     }
 
     get size(): THREE.Vector3 {
@@ -179,6 +185,15 @@ getObject3D(): THREE.Object3D {
 
 get position(): THREE.Vector3 {
   return this.container.position;
+}
+
+public respawn(position: THREE.Vector3) {
+  this.container.position.copy(position);
+  this.boatHealth = this.maxBoatHealth;
+  this.container.visible = true;
+  if (!this.scene.getObjectById(this.container.id)) {
+    this.scene.add(this.container);
+  }
 }
 
 

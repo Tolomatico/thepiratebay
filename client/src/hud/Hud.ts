@@ -134,6 +134,7 @@ export class HUD {
       if(ratio <= 0 )bar.container.style.display = 'none';
       bar.fill.style.width = `${ratio * 100}%`;
       
+      
       // Color dinámico
       if (ratio < 0.3) bar.fill.style.background = "#ff0000";
       else if (ratio < 0.6) bar.fill.style.background = "#ffff00";

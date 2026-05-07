@@ -7,6 +7,7 @@ import type { Projectile } from "../weapon/Projectile";
 export class Enemy{
     private ocean:Ocean
     private container: THREE.Group;
+    private id: string;
     private health:number=500;
     private maxHealth:number=500;
     private model!: THREE.Object3D;
@@ -17,6 +18,7 @@ export class Enemy{
    private onShoot: () => void;
     constructor(scene:THREE.Scene,ocean:Ocean,position:THREE.Vector3, onShoot: () => void){
 
+      this.id = "enemy-" + Math.random().toString(36).substr(2, 9);
       this.onShoot=onShoot
       this.ocean=ocean
       this.container = new THREE.Group();
@@ -27,7 +29,6 @@ export class Enemy{
       this.leftCanon = new SideCanon(scene, this.container,this.onShoot, "left", 20);
       this.rightCanon = new SideCanon(scene, this.container,this.onShoot, "right", 20);
       this.loadModel().then(() => {
-    console.log("Barco cargado");
   });
       scene.add(this.container); 
       
@@ -145,6 +146,10 @@ getHealthRatio(): number {
 
     getPosition(): THREE.Vector3 {
   return this.container.position.clone();
+}
+
+    getId(): string {
+  return this.id;
 }
 
 

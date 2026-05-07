@@ -5,11 +5,11 @@ import { Ocean } from './ocean/Ocean';
 import { Boat } from './boat/Boat';
 import { Controlls } from "./controlls/Controlls"
 import  { EnemyManager } from './bots/EnemyManager';
-import { HUD } from './hud/Hud';
-import  { SoundManager } from './soundmanager/SoundManager';
 import  { PlayerManager } from './player-manager/PlayerManager';
 import { Projectile } from './weapon/Projectile';
 import type { NetworkManager } from './network/NetworkManager';
+import type { EnemyHealthBar } from './context/HudContext';
+import  { SoundManager } from './soundmanager/SoundManager';
 
 export class GameEngine {
   private scene: THREE.Scene
@@ -22,7 +22,6 @@ export class GameEngine {
   private controls: Controlls
   private timer = new THREE.Timer();
   private lastNetworkUpdate = 0;
-  private hud!: HUD
   public enemyManager!: EnemyManager;
   private soundManager!: SoundManager;
    
@@ -34,9 +33,29 @@ export class GameEngine {
   // Recibe el contenedor donde montar el canvas
   private container: HTMLDivElement;
 
-  constructor(container: HTMLDivElement,networkManager: NetworkManager) {
+  // Funciones para actualizar el hud
+  private setPlayerHealth: (health: number) => void;
+  private setRespawnCountdown: (countdown: number | null) => void;
+  private setEnemyCount: (count: number) => void;
+  private setEnemyHealthBars: (bars: EnemyHealthBar[]) => void;
+  private healthBarRefs: Map<string, HTMLDivElement>;
+
+  constructor(
+    container: HTMLDivElement,
+    networkManager: NetworkManager,
+    setPlayerHealth: (health: number) => void,
+    setRespawnCountdown: (countdown: number | null) => void,
+    setEnemyCount: (count: number) => void,
+    setEnemyHealthBars: (bars: EnemyHealthBar[]) => void,
+    healthBarRefs: Map<string, HTMLDivElement>
+  ) {
     this.container = container;
     this.networkManager = networkManager;
+    this.setPlayerHealth = setPlayerHealth;
+    this.setRespawnCountdown = setRespawnCountdown;
+    this.setEnemyCount = setEnemyCount;
+    this.setEnemyHealthBars = setEnemyHealthBars;
+    this.healthBarRefs = healthBarRefs;
     this.soundManager=new SoundManager()
     this.modelManager = new ModelManager();
     this.scene = new THREE.Scene()
@@ -63,7 +82,6 @@ export class GameEngine {
     // Multiplayer
     this.playerManager = new PlayerManager(this.scene, this.modelManager, this.projectileRegistry);
 
-    this.hud = new HUD(this.camera);
     // this.soundManager.playMusic();
    this.controls = new Controlls(this.camera, this.renderer.domElement, null as any)
     this.ocean = new Ocean(this.scene)
@@ -77,6 +95,38 @@ export class GameEngine {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
 });
   }
+
+private startRespawnCountdown() {
+  let seconds = 10;
+  this.setRespawnCountdown(seconds);
+  this.inputManager.disable();
+  
+  const interval = setInterval(() => {
+    seconds--;
+    this.setRespawnCountdown(seconds);
+    
+    if (seconds <= 0) {
+      clearInterval(interval);
+      this.respawn();
+      this.inputManager.enable(); 
+    }
+  }, 1000);
+}
+
+private respawn() {
+  const angle = Math.random() * Math.PI * 2;
+  const radius = 20 + Math.random() * 20;
+  const position = new THREE.Vector3(
+    Math.cos(angle) * radius,
+    0,
+    Math.sin(angle) * radius
+  );
+  
+  this.boat.respawn(position);
+ // this.inputManager.disabled = false; 
+  this.setRespawnCountdown(null);
+   this.networkManager.emitRespawn(position); 
+}
  
 
   public async init (){
@@ -98,8 +148,9 @@ export class GameEngine {
           damage: 50 ,
           projectileId: id
         });
-      },
-      this.projectileRegistry
+      }, 
+      () => this.startRespawnCountdown(),
+       this.projectileRegistry,
     );
       // Controles del jugador
     this.controls.setTarget(this.boat.getObject3D())
@@ -134,6 +185,8 @@ export class GameEngine {
       if (player) player.shoot(data.type, data.projectileId);
     });
 
+
+
     this.networkManager.onCurrentPlayers((players) => {
   players.forEach(p => {
     this.playerManager.addPlayer(p.id);
@@ -146,7 +199,13 @@ this.networkManager.onPlayerJoined((data) => {
     this.playerManager.addPlayer(data.id);
   }
 });
+this.networkManager.onPlayerRespawn((data) => {
+  const player = this.playerManager.getPlayer(data.id);
+  if (player) player.respawn(new THREE.Vector3(data.position.x, data.position.y, data.position.z));
+});
   }
+
+
 
   dispose() {
   this.renderer.dispose()
@@ -175,15 +234,67 @@ this.networkManager.onPlayerJoined((data) => {
     this.boat.update(this.inputManager, time,delta)
     this.ocean.update(time)
     this.playerManager.update(delta);
+    
+    // IMPORTANTE: Actualizar enemigos para que sus posiciones no sean stale
+    this.enemyManager.update(
+      time, 
+      this.boat.getActiveProjectiles(), 
+      delta, 
+      this.boat.position, 
+      new THREE.Vector3(), // Simplificado: velocidad del jugador
+      this.boat.getHitbox(), 
+      (dmg) => this.boat.takeDamage(dmg)
+    );
+
     this.controls.update()
-    this.hud.update({ 
-      player: {playerHealth:this.boat.health, maxPlayerHealth:this.boat.maxHealth}, 
-      enemyCount: this.enemyManager.enemies.length + this.playerManager.getPlayers().length,
-      enemies: [
-        ...this.enemyManager.getEnemies(),
-        ...this.playerManager.getPlayers()
-      ]
+    
+    // Actualizar el HUD en React
+    this.camera.updateMatrixWorld(); // Asegurar que la cámara tiene la posición actual
+    this.camera.updateProjectionMatrix();
+
+    this.setPlayerHealth(this.boat.health);
+    const enemies = [
+      ...this.enemyManager.getEnemies(),
+      ...this.playerManager.getPlayers()
+    ];
+    this.setEnemyCount(enemies.length);
+
+    // Calcular barras de vida para los enemigos
+    const width = this.renderer.domElement.clientWidth;
+    const height = this.renderer.domElement.clientHeight;
+
+    const healthBars: EnemyHealthBar[] = enemies.map((enemy) => {
+      const id = (enemy as any).getId();
+      const pos = enemy.getPosition().clone();
+      pos.y += 12; // Altura ajustada
+      pos.project(this.camera);
+
+      const isVisible = pos.z < 1 && pos.x >= -1 && pos.x <= 1 && pos.y >= -1 && pos.y <= 1;
+      const ratio = enemy.getHealthRatio();
+
+      // ACTUALIZACIÓN DIRECTA DEL DOM (Cero Lag)
+      const el = this.healthBarRefs.get(id);
+      if (el) {
+          if (isVisible && ratio > 0) {
+              const x = (pos.x * 0.5 + 0.5) * width;
+              const y = (-pos.y * 0.5 + 0.5) * height;
+              el.style.display = 'block';
+              el.style.left = `${x}px`;
+              el.style.top = `${y}px`;
+          } else {
+              el.style.display = 'none';
+          }
+      }
+      
+      return {
+        id,
+        healthRatio: ratio,
+        visible: isVisible && ratio > 0
+      };
     });
+    
+    this.setEnemyHealthBars(healthBars);
+
     this.renderer.render(this.scene, this.camera)
     requestAnimationFrame(this.animate)
   }

@@ -6,7 +6,7 @@ import type { Projectile } from "../weapon/Projectile";
 interface PlayerData {
     id: string;
     position: { x: number; y: number; z: number };
-    rotation: { y: number };
+    rotation?: { y: number };
 }
 
 export class PlayerManager {
@@ -36,15 +36,14 @@ export class PlayerManager {
         }
     }
 
-    updatePlayer(data: PlayerData) {
+updatePlayer(data: PlayerData) {
         const player = this.players.get(data.id);
         if (!player) {
-            // El jugador no existe, añadirlo primero
             this.addPlayer(data.id);
         }
         const existingPlayer = this.players.get(data.id);
-        if (existingPlayer && data.position && data.rotation) {
-            existingPlayer.updatePosition(data.position, data.rotation);
+        if (existingPlayer && data.position) {
+            existingPlayer.updatePosition(data.position, data.rotation || { y: 0 });
         }
     }
     update(delta: number) {

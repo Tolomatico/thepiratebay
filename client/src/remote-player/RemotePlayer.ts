@@ -58,8 +58,14 @@ export class RemotePlayer {
   }
 
   private onShoot(type: "left" | "right" | "front") {
-    console.log("shoot",type)
+
   // no hacemos nada, no hay sonido ni emisión
+}
+
+respawn(position: THREE.Vector3) {
+  this.health = this.maxHealth;
+  this.container.position.copy(position);
+  this.scene.add(this.container);
 }
 
 

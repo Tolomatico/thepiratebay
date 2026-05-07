@@ -2,6 +2,7 @@
 export class InputManager {
     keysPressed:string[]=[]
 
+    disabled: boolean = false;
 
     
     constructor() {
@@ -13,7 +14,17 @@ export class InputManager {
         })
     }
 
+    disable() {
+        this.disabled = true;
+        this.keysPressed = [];
+    }
+
+    enable() {
+        this.disabled = false;
+    }
+
     isKeyPressed(key:string){
+        if (this.disabled) return;
         key=key.toLowerCase().replace("key","")
         switch (key) {
             case "w":

@@ -124,7 +124,16 @@ const isNewPlayer = !this.gameManager.getPlayer(socket.id);
     socket.broadcast.emit("playerMoved", { id: socket.id, ...data });
   }
 });
-            
+
+socket.on("playerRespawn", (data: { position: { x: number; y: number; z: number } }) => {
+  const lobbyId = [...socket.rooms].find(r => r !== socket.id);
+  if (lobbyId) {
+    socket.to(lobbyId).emit("playerRespawn", { id: socket.id, position: data.position });
+  }
+  // resetear vida en el servidor
+  const player = this.gameManager.getPlayer(socket.id);
+  if (player) player.health = 500;
+});      
 
 socket.on("playerShoot", (data: { 
              type: string;
@@ -135,7 +144,6 @@ socket.on("playerShoot", (data: {
              }) => {
                     const lobbyId = [...socket.rooms].find(r => r !== socket.id);
                     if (!lobbyId) return;
-                   console.log("dir servidor:", Math.sqrt(data.direction.x**2 + data.direction.y**2 + data.direction.z**2), data.direction);
                     // Log de la dirección recibida
                     const dirLength = Math.sqrt(data.direction.x * data.direction.x + data.direction.y * data.direction.y + data.direction.z * data.direction.z);
                   

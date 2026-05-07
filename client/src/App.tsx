@@ -7,6 +7,7 @@ import Lobby from "./views/Lobby"
 import { NetworkProvider } from "./context/NetworkContext"
 import { UserProvider, useUser } from "./context/UserContext"
 import type { ILobby } from "./interfaces/lobby"
+import { HudProvider } from "./context/HudContext"
 
 type Screen = "menu" | "lobby-list" | "lobby" | "game"
 
@@ -40,7 +41,7 @@ function AppContent() {
     return <Lobby lobby={lobby} onStart={handleStart} />
 
   if (screen === "game")
-    return <Game />
+    return <HudProvider><Game /></HudProvider>
 }
 
 export function App() {
