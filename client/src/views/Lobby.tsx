@@ -11,8 +11,8 @@ export default function Lobby({ lobby,onStart}:LobbyProps) {
   const network = useNetwork()
   useEffect(()=>{
     network.onLobbyUpdated((lobby:ILobby) => setCurrentLobby(lobby))
-    network.joinLobby(lobby.id, (newLobby) => {
-  network.setLobbyId(newLobby.id); // ← guarda el lobby
+    network.joinLobby(lobby.id as string, (newLobby:ILobby) => {
+  network.setLobbyId(newLobby.id as string); 
   setCurrentLobby(newLobby);
 });
 

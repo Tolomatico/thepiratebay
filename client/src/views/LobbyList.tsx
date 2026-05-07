@@ -12,20 +12,17 @@ export default function LobbyList({ onCreate, onJoin }: LobbyListProps) {
   const [lobbyName, setLobbyName] = useState("")
   const [maxPlayers, setMaxPlayers] = useState(2)
   const [creating, setCreating] = useState(false)
-  const [error, setError] = useState<string | null>(null);
 
   const network = useNetwork();
   const { username } = useUser();
   const [lobbies, setLobbies] = useState<ILobby[]>([]);
 
   useEffect(() => {
-    network.onLobbyError((msg) => setError(msg));
     network.getLobbies(data => setLobbies(data))
     network.onLobbiesUpdated((data) => setLobbies(data));
 
      return () => {
     network.socket.off("lobbiesUpdated")
-    network.socket.off("lobbyError")
   }
   }, [])
 

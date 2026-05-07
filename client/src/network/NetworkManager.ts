@@ -17,8 +17,7 @@ export class NetworkManager {
     private currentLobbyId: string | null = null;
 
     constructor() {
-        //this.socket = io(`https://thepiratebay.onrender.com`);
-       
+       //this.socket = io(`https://thepiratebay.onrender.com`);
        this.socket = io(`http://localhost:3001`);
         this.setupEvents();
     }

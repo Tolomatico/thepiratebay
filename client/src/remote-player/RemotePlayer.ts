@@ -58,6 +58,7 @@ export class RemotePlayer {
   }
 
   private onShoot(type: "left" | "right" | "front") {
+    console.log("shoot",type)
   // no hacemos nada, no hay sonido ni emisión
 }
 
