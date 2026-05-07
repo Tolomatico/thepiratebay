@@ -104,7 +104,7 @@ export default function LobbyList({ onCreate, onJoin }: LobbyListProps) {
           return (
             <div key={lobby.id} className="flex items-center justify-between gap-4 bg-gray-800 border-2 border-gray-700 rounded-md px-6 py-4">
               <div>
-                <h2 className="text-lg text-gray-100 font-bold">{lobby.name}</h2>
+                <h2 className="text-lg text-gray-100 font-bold">{lobby.lobbyName}</h2>
                 <p className="text-sm text-gray-400">{currentPlayers} / {lobby.maxPlayers} jugadores</p>
               </div>
               <button

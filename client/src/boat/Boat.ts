@@ -170,7 +170,13 @@ async loadModel( ) {
     -box.min.y,
     -center.z
   );
-
+  const angle = Math.random() * Math.PI * 2;
+  const radius = 50 + Math.random() * 50;
+  this.container.position.set(
+    Math.cos(angle) * radius,
+    0,
+    Math.sin(angle) * radius
+  );
 
   this.visualBox.add(this.model);
   this.visualBox.rotation.y = Math.PI + Math.PI  ;

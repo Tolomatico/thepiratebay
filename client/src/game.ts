@@ -65,19 +65,35 @@ export class GameEngine {
     this.camera.position.set(0, 5, 5)
     this.camera.lookAt(0, 0, 0)
 
-    this.renderer = new THREE.WebGLRenderer()
+
+   this.renderer = new THREE.WebGLRenderer({
+      antialias: true
+    })
     this.renderer.setSize(window.innerWidth, window.innerHeight)
+    this.renderer.outputColorSpace = THREE.SRGBColorSpace
     this.container.appendChild(this.renderer.domElement)
     
-    const light = new THREE.DirectionalLight(0xffffff, 1.5);
-    light.position.set(10, 20, 10);
-    this.scene.add(light);
+    const light = new THREE.DirectionalLight(0xffffff, 1.2)
+    light.position.set(20, 40, 20)
+    this.scene.add(light)
    
-    const ambient = new THREE.AmbientLight(0xffffff, 0.8);
-    this.scene.add(ambient);
+    const ambient = new THREE.AmbientLight(0xffffff, 0.35)
+    this.scene.add(ambient)
     
-    const hemi = new THREE.HemisphereLight(0xffffff, 0x888888, 0.7);
-    this.scene.add(hemi);
+   const hemi = new THREE.HemisphereLight(
+      0xbfe3ff, // cielo
+      0x1b2b34, // rebote del mar
+      1.1
+  )
+  this.scene.add(hemi)
+
+
+this.scene.background = new THREE.Color(0x9fc9d8)
+
+this.scene.fog = new THREE.FogExp2(
+  0x9fc9d8,
+  0.0025
+)
 
     // Multiplayer
     this.playerManager = new PlayerManager(this.scene, this.modelManager, this.projectileRegistry);
@@ -115,7 +131,7 @@ private startRespawnCountdown() {
 
 private respawn() {
   const angle = Math.random() * Math.PI * 2;
-  const radius = 20 + Math.random() * 20;
+  const radius = 40 + Math.random() * 40;
   const position = new THREE.Vector3(
     Math.cos(angle) * radius,
     0,

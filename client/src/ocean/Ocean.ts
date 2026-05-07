@@ -8,7 +8,7 @@ export class Ocean {
   private waveLength = 0; // Longitud de onda más corta para ver más picos
 
   constructor(scene: THREE.Scene) {
-    const geometry = new THREE.PlaneGeometry(200, 200, 200, 200);
+    const geometry = new THREE.PlaneGeometry(500, 500, 500, 500);
 
     this.water = new Water(geometry, {
       textureWidth: 512,
@@ -19,10 +19,11 @@ export class Ocean {
           texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
         }
       ),
-      sunDirection: new THREE.Vector3(1, 0, 0).normalize(),
+      sunDirection: new THREE.Vector3(1, 1, 1).normalize(),
       sunColor: 0xffffff,
-      waterColor: 0x001e0f,
-      distortionScale: 3.7,
+      waterColor: 0x0b3d4a,
+      distortionScale: 2.5,
+      fog: true
     });
 
     this.water.rotation.x = -Math.PI / 2;
