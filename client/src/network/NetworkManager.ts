@@ -1,13 +1,7 @@
 import { io, Socket } from "socket.io-client";
+import type { PlayerData } from "../interfaces/player";
 
-interface MoveData {
-    position: { x: number; y: number; z: number };
-    rotation: { y: number };
-}
 
-interface PlayerMovedData extends MoveData {
-    id: string;
-}
 
 interface PlayerDisconnectedData {
     id: string;
@@ -18,7 +12,7 @@ export class NetworkManager {
 
     constructor() {
        //this.socket = io(`https://thepiratebay.onrender.com`);
-       this.socket = io(`http://localhost:3000`);
+      this.socket = io(`http://localhost:3000`);
         this.setupEvents();
     }
 
@@ -85,17 +79,16 @@ onLobbyUpdated(callback: (lobby: any) => void) {
 }
 
 
-onCurrentPlayers(callback: (data: PlayerMovedData[]) => void) {
+onCurrentPlayers(callback: (data: PlayerData[]) => void) {
   this.socket.on("currentPlayers", callback);
 }
 
-onPlayerJoined(callback: (data: { id: string; position?: { x: number; y: number; z: number }; rotation?: { y: number } }) => void) {
+onPlayerJoined(callback: (data: PlayerData) => void) {
   this.socket.on("playerJoined", callback);
 }
 
-  emitMove(data: MoveData) {
+  emitMove(data: PlayerData) {
     if (!this.currentLobbyId) {
-      // Emitir sin lobbyId si no hay
       this.socket.emit("playerMove", {...data, lobbyId: ""});
       return;
     }
@@ -106,7 +99,7 @@ onPlayerJoined(callback: (data: { id: string; position?: { x: number; y: number;
   this.currentLobbyId = id;
 }
 
-  onPlayerMoved(callback: (data: PlayerMovedData) => void) {
+  onPlayerMoved(callback: (data: PlayerData) => void) {
     this.socket.on("playerMoved", callback);
   }
 

@@ -5,6 +5,8 @@ import { FrontCanon } from "../weapon/FrontCanon";
 import type { Projectile } from "../weapon/Projectile";
 import { Explosion } from "../explosion/Explosion";
 import { SoundManager } from "../soundmanager/SoundManager";
+import { SHIPS, type PlayerData, type ShipStats } from "../interfaces/player";
+import { PlayerModels } from "../constants";
 
 export class RemotePlayer {
   private visualBox: THREE.Group;
@@ -15,28 +17,34 @@ export class RemotePlayer {
   private explosions: Explosion[] = [];
   private soundManager: SoundManager;
   private id:string
-    private hitboxSize = { x: 10, y: 10, z: 10 }; // mismo tamaño que el modelo
-    private hitbox: THREE.Box3 = new THREE.Box3();
+  private hitboxSize = { x: 10, y: 10, z: 10 }; // mismo tamaño que el modelo
+  private hitbox: THREE.Box3 = new THREE.Box3();
+  private playerData: PlayerData;
+  private stats: ShipStats;
   
   // Health
   public health: number = 500;
   public maxHealth: number = 500;
 
   // Weapons
-     private leftCanon: SideCanon;
-      private rightCanon: SideCanon;
-      private frontCanon: FrontCanon;
+  private leftCanon: SideCanon;
+  private rightCanon: SideCanon;
+  private frontCanon: FrontCanon;
 
   constructor(
     scene: THREE.Scene,
     modelManager: ModelManager,
-    id:string,
+    playerData: PlayerData,
     registry?: Map<string, Projectile>
   ) {
-    this.id=id
+    this.id=playerData.id
     this.soundManager=new SoundManager();
     this.modelManager=modelManager
     this.scene=scene
+    this.playerData = playerData;
+    this.stats = SHIPS[playerData.shipType];
+    this.health = this.stats.health || 1000;
+    this.maxHealth = this.stats.health || 1000;
     this.visualBox = new THREE.Group();
     this.container = new THREE.Group();
     this.container.add(this.visualBox);
@@ -50,7 +58,7 @@ export class RemotePlayer {
     // this.container.add(hitboxMesh);
 
     scene.add(this.container);
-
+    
     this.loadModel();
     this.frontCanon = new FrontCanon(this.scene, this.container,() => this.onShoot("front"), registry);
     this.leftCanon = new SideCanon(this.scene, this.container,() => this.onShoot("left"), "left", undefined, registry);
@@ -58,9 +66,13 @@ export class RemotePlayer {
   }
 
   private onShoot(type: "left" | "right" | "front") {
-
+  console.log(type)
   // no hacemos nada, no hay sonido ni emisión
 }
+
+  getId() { return this.playerData.id; }
+  getUsername() { return this.playerData.username; }
+  getTeam() { return this.playerData.team; }
 
 respawn(position: THREE.Vector3) {
   this.health = this.maxHealth;
@@ -100,7 +112,7 @@ shoot(type: "front" | "left" | "right", projectileId: string) {
  async loadModel( ) {
 
 
-    this.model = await this.modelManager.load("/models/pirate.glb");
+    this.model = await this.modelManager.load(PlayerModels[this.playerData.shipType]);
  
    // 1️⃣ bounding inicial
    let box = new THREE.Box3().setFromObject(this.model);
@@ -108,9 +120,9 @@ shoot(type: "front" | "left" | "right", projectileId: string) {
    box.getSize(size);
  
    // 2️⃣ definir tamaño objetivo (como tu caja roja)
-   const targetWidth =10;
-   const targetHeight = 10;
-   const targetDepth =10;
+   const targetWidth =this.stats.hitbox.x;
+   const targetHeight =this.stats.hitbox.y;
+   const targetDepth =this.stats.hitbox.z;
  
    const scaleX = targetWidth / size.x;
    const scaleY = targetHeight / size.y;
@@ -133,19 +145,14 @@ shoot(type: "front" | "left" | "right", projectileId: string) {
  
  
    this.visualBox.add(this.model);
-   this.visualBox.rotation.y = -Math.PI/2  ;
+   this.visualBox.rotation.y = Math.PI + Math.PI
    this.container.add(this.visualBox);
   
  }
 
   updatePosition(position: { x: number; y: number; z: number }, rotation: { y: number }) {
     this.container.position.set(position.x, position.y, position.z);
-    this.visualBox.rotation.y = -Math.PI/2;
     this.container.rotation.y = rotation.y
-  }
-
-  getId(): string {
-    return this.id;
   }
 
   destroy() {

@@ -97,10 +97,18 @@ socket.on("playerReady", () => {
 
      
 
-socket.on("playerMove", (data: {position: { x: number; y: number; z: number }; rotation: { y: number }; lobbyId: string }) => {
+socket.on("playerMove", (data:any) => {
 const isNewPlayer = !this.gameManager.getPlayer(socket.id);
   if (isNewPlayer) {
-    this.gameManager.addPlayer(socket.id);
+     this.gameManager.addPlayer({
+    id: socket.id,
+    username: data.username,
+    team: data.team,
+    shipType: data.shipType,
+    position: data.position,
+    rotation: data.rotation,
+    health: data.health
+  });
   }
 
   // siempre asegurar que está en la room y tiene lobbyId

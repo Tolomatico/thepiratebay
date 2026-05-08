@@ -2,12 +2,8 @@ import type { ModelManager } from "../model/ModelManager";
 import { RemotePlayer } from "../remote-player/RemotePlayer";
 import * as THREE from "three";
 import type { Projectile } from "../weapon/Projectile";
+import type { PlayerData } from "../interfaces/player";
 
-interface PlayerData {
-    id: string;
-    position: { x: number; y: number; z: number };
-    rotation?: { y: number };
-}
 
 export class PlayerManager {
     private scene: THREE.Scene;
@@ -21,10 +17,10 @@ export class PlayerManager {
         this.projectileRegistry = projectileRegistry;
     }
 
-    addPlayer(id: string) {
-        if (!this.players.has(id)) {
-            const remotePlayer = new RemotePlayer(this.scene, this.modelManager, id, this.projectileRegistry);
-            this.players.set(id, remotePlayer);
+    addPlayer(playerData: PlayerData) {
+        if (!this.players.has(playerData.id)) {
+            const remotePlayer = new RemotePlayer(this.scene, this.modelManager, playerData, this.projectileRegistry);
+            this.players.set(playerData.id, remotePlayer);
         }
     }
 
@@ -39,7 +35,7 @@ export class PlayerManager {
 updatePlayer(data: PlayerData) {
         const player = this.players.get(data.id);
         if (!player) {
-            this.addPlayer(data.id);
+            this.addPlayer(data);
         }
         const existingPlayer = this.players.get(data.id);
         if (existingPlayer && data.position) {

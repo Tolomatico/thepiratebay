@@ -1,3 +1,4 @@
+import { PlayerData } from "../interfaces/player.js";
 import { Player } from "../player-manager/Player.js";
 import { ProjectileManager } from "../projectile-manager/ProjectileManager.js";
 
@@ -25,10 +26,17 @@ respawnPlayer(id: string, position: { x: number; y: number; z: number }, lobbyId
   return this.players.get(id);
 }
 
-  addPlayer(id: string, lobbyId?: string): Player {
-  const player = new Player(id);
-  if (lobbyId) player.lobbyId = lobbyId;
-  this.players.set(id, player);
+ addPlayer(data: Partial<PlayerData>): Player {
+  const player = new Player(
+    data.id!,
+    data.username!,
+    data.team!,
+    data.shipType!,
+    data.position!,
+    data.rotation!,
+    data.health!
+  );
+  this.players.set(player.id, player);
   return player;
 }
 

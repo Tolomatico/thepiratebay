@@ -7,6 +7,8 @@ import{ SideCanon } from '../weapon/SideCanon';
 import type { Projectile } from '../weapon/Projectile';
 import { Explosion } from '../explosion/Explosion';
 import { SoundManager } from '../soundmanager/SoundManager';
+import { SHIPS, type ShipStats, type ShipType } from '../interfaces/player';
+import { PlayerModels } from '../constants';
 
 export class Boat {
   private modelManager: ModelManager;
@@ -30,6 +32,8 @@ export class Boat {
   private hitbox: THREE.Box3 = new THREE.Box3();
   private soundManager: SoundManager;
   private onDeath: () => void
+  private shipType: ShipType;
+  private stadisctics: ShipStats;
  
   private onShoot: (type: "front" | "left" | "right", direction: THREE.Vector3,id:string) => void
    
@@ -40,9 +44,17 @@ export class Boat {
       ocean: Ocean,
       onShoot: (type: "front" | "left" | "right", direction: THREE.Vector3,id:string) => void,
       onDeath: () => void,
+      shipType: ShipType,
       registry?: Map<string, Projectile>,
     
     ) {
+       this.shipType = shipType;
+       const stats = SHIPS[this.shipType];
+       this.maxSpeed = stats.speed;
+       this.boatHealth = stats.health;
+       this.maxBoatHealth = stats.health;
+       this.stadisctics={...stats}
+       
        this.onDeath = onDeath
         this.soundManager = new SoundManager();
         this.model=null as unknown as THREE.Object3D;
@@ -139,7 +151,7 @@ this.rightCanon = new SideCanon(
         ];
 }
 async loadModel( ) {
-  this.model = await this.modelManager.load("/models/english.glb");
+  this.model = await this.modelManager.load(PlayerModels[this.shipType]);
 
   // 1️⃣ bounding inicial
   let box = new THREE.Box3().setFromObject(this.model);
@@ -147,9 +159,9 @@ async loadModel( ) {
   box.getSize(size);
 
   // 2️⃣ definir tamaño objetivo (como tu caja roja)
-  const targetWidth =15;
-  const targetHeight = 15;
-  const targetDepth =15;
+  const targetWidth =this.stadisctics.hitbox.x;
+  const targetHeight =this.stadisctics.hitbox.y;
+  const targetDepth =this.stadisctics.hitbox.z;
 
   const scaleX = targetWidth / size.x;
   const scaleY = targetHeight / size.y;

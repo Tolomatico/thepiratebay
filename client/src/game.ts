@@ -8,8 +8,9 @@ import  { EnemyManager } from './bots/EnemyManager';
 import  { PlayerManager } from './player-manager/PlayerManager';
 import { Projectile } from './weapon/Projectile';
 import type { NetworkManager } from './network/NetworkManager';
-import type { EnemyHealthBar } from './context/HudContext';
+import type { EnemyHealthBar, RemotePlayerHUD } from './context/HudContext';
 import  { SoundManager } from './soundmanager/SoundManager';
+import type { ShipType, Team } from './interfaces/player';
 
 export class GameEngine {
   private scene: THREE.Scene
@@ -29,6 +30,7 @@ export class GameEngine {
   private networkManager: NetworkManager;
   private playerManager: PlayerManager;
   private projectileRegistry = new Map<string, Projectile>();
+  private remotePlayers: Map<string, RemotePlayerHUD>;
 
   // Recibe el contenedor donde montar el canvas
   private container: HTMLDivElement;
@@ -40,18 +42,31 @@ export class GameEngine {
   private setEnemyHealthBars: (bars: EnemyHealthBar[]) => void;
   private healthBarRefs: Map<string, HTMLDivElement>;
 
+  private username:string
+  private team:string
+  private shipType:string
   constructor(
     container: HTMLDivElement,
     networkManager: NetworkManager,
+    username:string,
+    team:Team,
+    shipType:ShipType,
     setPlayerHealth: (health: number) => void,
+    setPlayerMaxHealth: (maxHealth: number) => void,
     setRespawnCountdown: (countdown: number | null) => void,
     setEnemyCount: (count: number) => void,
     setEnemyHealthBars: (bars: EnemyHealthBar[]) => void,
-    healthBarRefs: Map<string, HTMLDivElement>
+    healthBarRefs: Map<string, HTMLDivElement>,
+    remotePlayers: Map<string, RemotePlayerHUD>
   ) {
+    this.remotePlayers = remotePlayers;
+    this.username=username
+    this.team=team
+    this.shipType=shipType
     this.container = container;
     this.networkManager = networkManager;
     this.setPlayerHealth = setPlayerHealth;
+    setPlayerMaxHealth(this.shipType === "english" ? 800 : 500);
     this.setRespawnCountdown = setRespawnCountdown;
     this.setEnemyCount = setEnemyCount;
     this.setEnemyHealthBars = setEnemyHealthBars;
@@ -129,6 +144,23 @@ private startRespawnCountdown() {
   }, 1000);
 }
 
+private updateRemotePlayersHUD() {
+  this.remotePlayers.clear();
+  this.playerManager.getPlayers().forEach(p => {
+    this.remotePlayers.set(p.getId(), {
+      id: p.getId(),
+      username: p.getUsername(),
+      health: p.health,
+      maxHealth: p.maxHealth,
+      position: {
+        x: p.getPosition().x,
+        y: p.getPosition().y,
+        z: p.getPosition().z,
+      }
+    });
+  });
+}
+
 private respawn() {
   const angle = Math.random() * Math.PI * 2;
   const radius = 40 + Math.random() * 40;
@@ -166,6 +198,7 @@ private respawn() {
         });
       }, 
       () => this.startRespawnCountdown(),
+      this.shipType as ShipType,
        this.projectileRegistry,
     );
       // Controles del jugador
@@ -175,7 +208,16 @@ private respawn() {
     // Manejo de los jugadores remotos
     this.networkManager.onPlayerMoved((data) => {
        if (data.id === this.networkManager.socket.id) return;
-       this.playerManager.addPlayer(data.id);
+       this.playerManager.addPlayer({
+        id:data.id,
+        username:data.username,
+        team:data.team ?? "red",
+        shipType:data.shipType,
+        position:data.position,
+        rotation:data.rotation,
+        health:data.health
+       });
+       this.updateRemotePlayersHUD();
        this.playerManager.updatePlayer(data);
     });
     this.networkManager.onPlayerDamaged((data) => {
@@ -190,10 +232,12 @@ private respawn() {
           remotePlayer.takeDamage(data.damage);
         }
       }
+      this.updateRemotePlayersHUD();
     });
     
     this.networkManager.onPlayerDisconnected((data) => {
       this.playerManager.removePlayer(data.id);
+      this.updateRemotePlayersHUD();
     });
 
     this.networkManager.onPlayerShoot((data) => {
@@ -205,19 +249,22 @@ private respawn() {
 
     this.networkManager.onCurrentPlayers((players) => {
   players.forEach(p => {
-    this.playerManager.addPlayer(p.id);
+    this.playerManager.addPlayer(p);
     this.playerManager.updatePlayer(p); 
   });
 });
 
 this.networkManager.onPlayerJoined((data) => {
   if (data.id !== this.networkManager.socket.id) {  
-    this.playerManager.addPlayer(data.id);
+    this.playerManager.addPlayer(data);
   }
 });
 this.networkManager.onPlayerRespawn((data) => {
   const player = this.playerManager.getPlayer(data.id);
-  if (player) player.respawn(new THREE.Vector3(data.position.x, data.position.y, data.position.z));
+  if (player) {
+    player.respawn(new THREE.Vector3(data.position.x, data.position.y, data.position.z));
+    this.updateRemotePlayersHUD();
+  }
 });
   }
 
@@ -236,14 +283,19 @@ this.networkManager.onPlayerRespawn((data) => {
 
     // Emitir la posición del jugador solo cada 50ms (20Hz) para optimizar la red
     if (time - this.lastNetworkUpdate > 30) {
-      this.networkManager.emitMove({
-        position: {
-          x: this.boat.position.x,
-          y: this.boat.position.y,
-          z: this.boat.position.z,
-        },
-        rotation: { y: this.boat.getObject3D().rotation.y }
-      });
+     this.networkManager.emitMove({
+  id: this.networkManager.socket.id,
+  username: this.username,        
+  team: this.team as Team,               
+  shipType: this.shipType as ShipType,     
+  health: this.boat.health,
+  position: {
+    x: this.boat.position.x,
+    y: this.boat.position.y,
+    z: this.boat.position.z,
+  },
+  rotation: { y: this.boat.getObject3D().rotation.y }
+});
       this.lastNetworkUpdate = time;
     }
 
@@ -274,7 +326,6 @@ this.networkManager.onPlayerRespawn((data) => {
       ...this.playerManager.getPlayers()
     ];
     this.setEnemyCount(enemies.length);
-
     // Calcular barras de vida para los enemigos
     const width = this.renderer.domElement.clientWidth;
     const height = this.renderer.domElement.clientHeight;
@@ -287,7 +338,7 @@ this.networkManager.onPlayerRespawn((data) => {
 
       const isVisible = pos.z < 1 && pos.x >= -1 && pos.x <= 1 && pos.y >= -1 && pos.y <= 1;
       const ratio = enemy.getHealthRatio();
-
+      
       // ACTUALIZACIÓN DIRECTA DEL DOM (Cero Lag)
       const el = this.healthBarRefs.get(id);
       if (el) {
@@ -305,7 +356,8 @@ this.networkManager.onPlayerRespawn((data) => {
       return {
         id,
         healthRatio: ratio,
-        visible: isVisible && ratio > 0
+        visible: isVisible && ratio > 0,
+        username: typeof (enemy as any).getUsername === 'function' ? (enemy as any).getUsername() : undefined
       };
     });
     
