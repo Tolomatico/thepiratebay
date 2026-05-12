@@ -26,7 +26,7 @@ export abstract class WeaponSystem {
     this.registry = registry;
     this.fireRate = fireRate;
     this.cooldown=this.fireRate;
-    const geometry = new THREE.SphereGeometry(0.15, 8, 8);
+    const geometry = new THREE.SphereGeometry(0.1, 8, 8);
     const material = new THREE.MeshBasicMaterial({ color: "black" });
     this.instancedMesh = new THREE.InstancedMesh(geometry, material, this.instanceCount);
     this.instancedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);

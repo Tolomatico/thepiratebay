@@ -3,12 +3,11 @@ import { Water } from 'three/examples/jsm/objects/Water.js';
 
 export class Ocean {
   private water: Water;
-  private waveHeight = 0; // Olas más visibles
-  private waveSpeed = 0;  // Velocidad ajustada para el tiempo en ms
-  private waveLength = 0; // Longitud de onda más corta para ver más picos
+  private texture: THREE.Texture;
 
   constructor(scene: THREE.Scene) {
-    const geometry = new THREE.PlaneGeometry(500, 500, 500, 500);
+    const geometry = new THREE.PlaneGeometry(1000, 1000);
+    
 
     this.water = new Water(geometry, {
       textureWidth: 512,
@@ -25,16 +24,13 @@ export class Ocean {
       distortionScale: 2.5,
       fog: true
     });
-
     this.water.rotation.x = -Math.PI / 2;
+    this.water.position.y = 0;
     scene.add(this.water);
   }
 
   getWaveHeight(x: number, z: number, time: number): number {
-    return (
-      Math.sin(x * this.waveLength + time * this.waveSpeed) * this.waveHeight +
-      Math.sin(z * (this.waveLength * 1.5) + time * (this.waveSpeed * 0.2)) * this.waveHeight
-    );
+    return 0;
   }
 
   update(time: number) {

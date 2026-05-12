@@ -9,6 +9,7 @@ import { Explosion } from '../explosion/Explosion';
 import { SoundManager } from '../soundmanager/SoundManager';
 import { SHIPS, type ShipStats, type ShipType } from '../interfaces/player';
 import { PlayerModels } from '../constants';
+import { WakeEffect } from '../effects/WakeEffect';
 
 export class Boat {
   private modelManager: ModelManager;
@@ -31,6 +32,7 @@ export class Boat {
   private explosions: Explosion[] = [];
   private hitbox: THREE.Box3 = new THREE.Box3();
   private soundManager: SoundManager;
+  private wakeEffect: WakeEffect;
   private onDeath: () => void
   private shipType: ShipType;
   private stadisctics: ShipStats;
@@ -75,6 +77,7 @@ export class Boat {
           //  this.container.add(hitboxMesh);
 
         this.scene.add(this.container)
+        this.wakeEffect = new WakeEffect(this.scene);
 
 
         const { front, left, right } = this.stadisctics.cannons
@@ -243,6 +246,9 @@ public respawn(position: THREE.Vector3) {
       exp.update(delta);
       return exp.isAlive();
     });
+    
+    // this.wakeEffect.update(this.container.position, this.container.rotation.y, this.speed, delta);
+    
        this.frontCanon.update(delta)
        this.leftCanon.update(delta)
        this.rightCanon.update(delta)
