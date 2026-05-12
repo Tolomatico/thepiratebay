@@ -33,8 +33,8 @@ export const SHIPS: Record<ShipType, ShipStats> = {
     model: "/models/pirate.glb",
      cannons: {
       front: { damage: 50, fireRate: 1000, quantity: 1, speed: 0.15 },
-      left:  { damage: 50, fireRate: 2500,  quantity: 3, speed: 0.20 },
-      right: { damage: 50, fireRate: 2500,  quantity: 3, speed: 0.20 },
+      left:  { damage: 50, fireRate: 1500,  quantity: 3, speed: 0.20 },
+      right: { damage: 50, fireRate: 1500,  quantity: 3, speed: 0.20 },
     }
   },
   fragate: {

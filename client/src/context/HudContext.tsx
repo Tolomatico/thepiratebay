@@ -20,6 +20,10 @@ interface GameContextType {
   playerMaxHealth: number;
   setPlayerHealth: (health: number) => void;
   setPlayerMaxHealth: (health: number) => void;
+  playerRotation: number;
+  setPlayerRotation: (rotation: number) => void;
+  playerPosition: { x: number; y: number; z: number };
+  setPlayerPosition: (position: { x: number; y: number; z: number }) => void;
   respawnCountdown: number | null;
   setRespawnCountdown: (seconds: number | null) => void;
   enemyCount: number;
@@ -36,6 +40,8 @@ const GameHudContext = createContext<GameContextType | null>(null);
 export const HudProvider = ({ children }: { children: React.ReactNode }) => {
   const [playerHealth, setPlayerHealth] = useState(100);
   const [playerMaxHealth, setPlayerMaxHealth] = useState(100);
+  const [playerRotation, setPlayerRotation] = useState(0);
+  const [playerPosition, setPlayerPosition] = useState({ x: 0, y: 0, z: 0 });
   const [respawnCountdown, setRespawnCountdown] = useState<number | null>(null);
   const [enemyCount, setEnemyCount] = useState(0);
   const [enemyHealthBars, setEnemyHealthBars] = useState<EnemyHealthBar[]>([]);
@@ -48,6 +54,10 @@ export const HudProvider = ({ children }: { children: React.ReactNode }) => {
     playerMaxHealth,
     setPlayerHealth,
     setPlayerMaxHealth,
+    playerRotation,
+    setPlayerRotation,
+    playerPosition,
+    setPlayerPosition,
     respawnCountdown,
     setRespawnCountdown,
     enemyCount,

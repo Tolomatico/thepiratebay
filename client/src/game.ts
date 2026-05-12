@@ -37,6 +37,8 @@ export class GameEngine {
 
   // Funciones para actualizar el hud
   private setPlayerHealth: (health: number) => void;
+  private setPlayerRotation: (rotation: number) => void;
+  private setPlayerPosition: (position: { x: number; y: number; z: number }) => void;
   private setRespawnCountdown: (countdown: number | null) => void;
   private setEnemyCount: (count: number) => void;
   private setEnemyHealthBars: (bars: EnemyHealthBar[]) => void;
@@ -53,6 +55,8 @@ export class GameEngine {
     shipType:ShipType,
     setPlayerHealth: (health: number) => void,
     setPlayerMaxHealth: (maxHealth: number) => void,
+    setPlayerRotation: (rotation: number) => void,
+    setPlayerPosition: (position: { x: number; y: number; z: number }) => void,
     setRespawnCountdown: (countdown: number | null) => void,
     setEnemyCount: (count: number) => void,
     setEnemyHealthBars: (bars: EnemyHealthBar[]) => void,
@@ -66,6 +70,8 @@ export class GameEngine {
     this.container = container;
     this.networkManager = networkManager;
     this.setPlayerHealth = setPlayerHealth;
+    this.setPlayerRotation = setPlayerRotation;
+    this.setPlayerPosition = setPlayerPosition;
     setPlayerMaxHealth(this.shipType === "fragate" ? 800 : 600);
     this.setRespawnCountdown = setRespawnCountdown;
     this.setEnemyCount = setEnemyCount;
@@ -322,6 +328,9 @@ this.networkManager.onPlayerRespawn((data) => {
     this.camera.updateProjectionMatrix();
 
     this.setPlayerHealth(this.boat.health);
+    this.setPlayerRotation(this.boat.getObject3D().rotation.y);
+    const pos = this.boat.getObject3D().position;
+    this.setPlayerPosition({ x: pos.x, y: pos.y, z: pos.z });
     const enemies = [
       ...this.enemyManager.getEnemies(),
       ...this.playerManager.getPlayers()

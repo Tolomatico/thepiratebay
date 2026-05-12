@@ -10,7 +10,7 @@ import type { ShipType, Team } from '../interfaces/player';
 export function Game() {
   const canvasRef = useRef<HTMLDivElement>(null)
   const network = useNetwork();
-  const { setPlayerHealth, setPlayerMaxHealth, setRespawnCountdown, setEnemyCount, setEnemyHealthBars, healthBarRefs, remotePlayers } = useGameHud();
+  const { setPlayerHealth, setPlayerMaxHealth, setPlayerRotation, setPlayerPosition, setRespawnCountdown, setEnemyCount, setEnemyHealthBars, healthBarRefs, remotePlayers } = useGameHud();
    const {username,team,shipType} = useUser();
   useEffect(() => {
     if (!canvasRef.current) return
@@ -23,6 +23,8 @@ export function Game() {
       shipType as ShipType || "pirate",
       setPlayerHealth,
       setPlayerMaxHealth,
+      setPlayerRotation,
+      setPlayerPosition,
       setRespawnCountdown,
       setEnemyCount,
       setEnemyHealthBars,
