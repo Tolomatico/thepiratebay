@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
 import { GameManager } from "../game-manager/GameManager.js";
 import { LobbyManager } from "../lobby-manager/LobbyManager.js";
+import { SHIPS } from "../interfaces/player.js";
 
 interface MoveData {
   position: { x: number; y: number; z: number };
@@ -85,7 +86,7 @@ emitHits(hits: { id: string; damage: number; health: number, projectileId: strin
             this.io.emit("lobbiesUpdated", this.lobbyManager.getLobbies());
             });
 
-        // Un jugador está listo
+// Un jugador está listo
 socket.on("playerReady", () => {
   const lobbyId = [...socket.rooms].find(r => r !== socket.id);
   if (lobbyId) {
@@ -95,7 +96,24 @@ socket.on("playerReady", () => {
   }
 });
 
-     
+// Actualizar info del jugador en el lobby (username, team, shipType)
+socket.on("updatePlayerInfo", (data: { username: string; team: string; shipType: string }) => {
+  const lobbyId = [...socket.rooms].find(r => r !== socket.id);
+  if (lobbyId) {
+    const lobby = this.lobbyManager.updatePlayerInfo(
+      socket.id, 
+      lobbyId, 
+      data.username, 
+      data.team as any, 
+      data.shipType as any
+    );
+    if (lobby) {
+      this.io.to(lobbyId).emit("lobbyUpdated", lobby);
+    }
+  }
+});
+
+      
 
 socket.on("playerMove", (data:any) => {
 const isNewPlayer = !this.gameManager.getPlayer(socket.id);
@@ -149,13 +167,23 @@ socket.on("playerShoot", (data: {
              direction: { x: number; y: number; z: number };
              damage: number;
              projectileId: string;
+             ownerTeam: string;
              }) => {
                     const lobbyId = [...socket.rooms].find(r => r !== socket.id);
                     if (!lobbyId) return;
-                    // Log de la dirección recibida
-                    const dirLength = Math.sqrt(data.direction.x * data.direction.x + data.direction.y * data.direction.y + data.direction.z * data.direction.z);
-                  
-                    this.gameManager.addProjectile(data.position, data.direction, socket.id, data.damage, data.projectileId, lobbyId);
+                    const player = this.gameManager.getPlayer(socket.id);
+                    if (!player) return;
+                    const shipStats = SHIPS[player.shipType];
+                    const canonStats = shipStats.cannons[data.type as "front" | "left" | "right"];
+                    console.log("data",data,"canonStats",canonStats)
+                    this.gameManager.addProjectile(
+                      data.position, 
+                      data.direction, 
+                      socket.id, 
+                      canonStats.damage,
+                      data.projectileId, 
+                      lobbyId,
+                      data.ownerTeam);
                    
                     // Notificar a los del lobby que alguien disparó
                     socket.to(lobbyId).emit("playerShoot", {

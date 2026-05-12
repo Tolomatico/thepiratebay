@@ -5,7 +5,6 @@ interface PlayerHealthBarProps {
 
 export function PlayerHealthBar({ health, maxHealth }: PlayerHealthBarProps) {
   const ratio = Math.max(0, health / maxHealth);
-  const percent = Math.round(ratio * 100);
 
   return (
     <div className="absolute bottom-10 left-10 flex flex-col gap-4 pointer-events-auto">
@@ -15,7 +14,7 @@ export function PlayerHealthBar({ health, maxHealth }: PlayerHealthBarProps) {
             Integridad del barco
           </span>
           <span className="text-white font-mono text-lg font-bold leading-none">
-            {percent}
+            {health} / {maxHealth}
           </span>
         </div>
         <div className="relative h-2 w-full bg-white/10 rounded-full overflow-hidden border border-white/5">

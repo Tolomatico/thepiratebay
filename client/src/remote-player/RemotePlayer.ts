@@ -16,7 +16,7 @@ export class RemotePlayer {
   private modelManager: ModelManager
   private explosions: Explosion[] = [];
   private soundManager: SoundManager;
-  private id:string
+  readonly id:string
   private hitboxSize = { x: 10, y: 10, z: 10 }; // mismo tamaño que el modelo
   private hitbox: THREE.Box3 = new THREE.Box3();
   private playerData: PlayerData;
@@ -48,7 +48,7 @@ export class RemotePlayer {
     this.visualBox = new THREE.Group();
     this.container = new THREE.Group();
     this.container.add(this.visualBox);
-
+    
 
     // // Hitbox visualizer
     // const hitboxGeom = new THREE.BoxGeometry(10, 10, 10);
@@ -60,9 +60,11 @@ export class RemotePlayer {
     scene.add(this.container);
     
     this.loadModel();
-    this.frontCanon = new FrontCanon(this.scene, this.container,() => this.onShoot("front"), registry);
-    this.leftCanon = new SideCanon(this.scene, this.container,() => this.onShoot("left"), "left", undefined, registry);
-    this.rightCanon = new SideCanon(this.scene, this.container,() => this.onShoot("right"), "right", undefined, registry);
+    const { front, left, right } = this.stats.cannons
+
+    this.frontCanon = new FrontCanon(this.scene, this.container,() => this.onShoot("front"), front.damage,front.quantity,front.fireRate, registry);
+    this.leftCanon = new SideCanon(this.scene, this.container,() => this.onShoot("left"), "left", left.damage,left.quantity,left.fireRate, registry);
+    this.rightCanon = new SideCanon(this.scene, this.container,() => this.onShoot("right"), "right", right.damage,right.quantity,right.fireRate, registry);
   }
 
   private onShoot(type: "left" | "right" | "front") {

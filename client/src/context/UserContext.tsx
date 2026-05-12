@@ -1,22 +1,23 @@
 import { createContext, useContext, useState } from "react";
+import { type ShipType, type Team } from "../interfaces/player";
 
 interface UserContextValue {
   username: string;
   setUsername: (name: string) => void;
-  team: string;
-  setTeam: (team: string) => void;
-  shipType: string;
-  setShipType: (shipType: string) => void;
+  team: Team;
+  setTeam: (team: Team) => void;
+  shipType: ShipType;
+  setShipType: (shipType: ShipType) => void;
 }
 
 const UserContext = createContext<UserContextValue | null>(null);
 
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [username, setUsername] = useState<string>("");
-  const [team, setTeam] = useState<string>("");
-  const [shipType, setShipType] = useState<string>("");
+  const [team, setTeam] = useState<Team>("red");
+  const [shipType, setShipType] = useState<ShipType>("pirate");
 
-  const values:UserContextValue={
+  const values: UserContextValue = {
     username,
     setUsername,
     team,

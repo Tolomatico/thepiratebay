@@ -3,7 +3,6 @@ import { useGameHud } from "../context/HudContext";
 
 export function HudOverlay() {
   const { playerHealth, playerMaxHealth, respawnCountdown, enemyCount, enemyHealthBars, healthBarRefs, remotePlayers } = useGameHud();
-  console.log(remotePlayers);
   return (
     <div className="fixed inset-0 pointer-events-none z-50 font-sans">
       {/* Enemy Health Bars (In-World) */}

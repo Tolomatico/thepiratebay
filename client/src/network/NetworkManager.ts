@@ -64,6 +64,10 @@ emitReady() {
   this.socket.emit("playerReady");
 }
 
+emitPlayerInfo(username: string, team: string, shipType: string) {
+  this.socket.emit("updatePlayerInfo", { username, team, shipType });
+}
+
 // salir del lobby
 leaveLobby(lobbyId: string) {
   this.socket.emit("leaveLobby", { lobbyId });
@@ -99,6 +103,10 @@ onPlayerJoined(callback: (data: PlayerData) => void) {
   this.currentLobbyId = id;
 }
 
+getCurrentLobbyId(): string | null {
+  return this.currentLobbyId;
+}
+
   onPlayerMoved(callback: (data: PlayerData) => void) {
     this.socket.on("playerMoved", callback);
   }
@@ -113,6 +121,7 @@ emitShoot(data: {
    direction: { x: number; y: number; z: number };
    damage: number;
    projectileId: string;
+   ownerTeam: string;
  }) {
    this.socket.emit("playerShoot", {...data, lobbyId: this.currentLobbyId || ""});
  }

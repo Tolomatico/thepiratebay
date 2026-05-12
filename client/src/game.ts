@@ -66,7 +66,7 @@ export class GameEngine {
     this.container = container;
     this.networkManager = networkManager;
     this.setPlayerHealth = setPlayerHealth;
-    setPlayerMaxHealth(this.shipType === "english" ? 800 : 500);
+    setPlayerMaxHealth(this.shipType === "fragate" ? 800 : 600);
     this.setRespawnCountdown = setRespawnCountdown;
     this.setEnemyCount = setEnemyCount;
     this.setEnemyHealthBars = setEnemyHealthBars;
@@ -194,7 +194,8 @@ private respawn() {
           position: { x: this.boat.position.x, y: this.boat.position.y, z: this.boat.position.z }, 
           direction: { x: direction.x, y: direction.y, z: direction.z }, 
           damage: 50 ,
-          projectileId: id
+          projectileId: id,
+          ownerTeam: this.team,
         });
       }, 
       () => this.startRespawnCountdown(),
@@ -284,7 +285,7 @@ this.networkManager.onPlayerRespawn((data) => {
     // Emitir la posición del jugador solo cada 50ms (20Hz) para optimizar la red
     if (time - this.lastNetworkUpdate > 30) {
      this.networkManager.emitMove({
-  id: this.networkManager.socket.id,
+  id: this.networkManager.socket.id as string,
   username: this.username,        
   team: this.team as Team,               
   shipType: this.shipType as ShipType,     

@@ -15,12 +15,13 @@ export class ProjectileManager {
     ownerId: string,
     damage: number,
     projectileId: string,
-    lobbyId:string
+    lobbyId:string,
+    ownerTeam: string
   ) {
-    this.projectiles.push(new ServerProjectile(position, direction, ownerId, damage,projectileId,lobbyId));
+    this.projectiles.push(new ServerProjectile(position, direction, ownerId, damage,projectileId,lobbyId,ownerTeam));
   }
 
-  update(delta: number): { id: string; damage: number; health: number, projectileId: string }[] {
+  update(delta: number): { id: string; damage: number; health: number, projectileId: string, }[] {
     const hits: { id: string; damage: number; health: number,projectileId:string }[] = [];
 
     for (const projectile of this.projectiles) {
@@ -36,18 +37,22 @@ export class ProjectileManager {
 
 private checkCollisions(hits: { id: string; damage: number; health: number,projectileId:string }[]) {
     const players = this.gameManager.getState();
+    const friendlyFire = {
+      "red": ["red"],
+      "blue": ["blue"]
+    };
     
     for (const projectile of this.projectiles) {
       if (projectile.age > projectile.lifetime || projectile.isDead) continue;
 
       for (const player of players) {
+       
+        
         if (player.id === projectile.ownerId) continue; 
         if (player.lobbyId !== projectile.lobbyId){     
             continue; 
         }
-          if (player.lobbyId !== projectile.lobbyId) {
-        continue;
-      }
+        
         const hitboxSize = { x: 10, y: 10, z: 10 };
         
         const dx = Math.abs(projectile.position.x - player.position.x);
@@ -57,6 +62,11 @@ private checkCollisions(hits: { id: string; damage: number; health: number,proje
         const isHit = dx < hitboxSize.x / 2 && dy < hitboxSize.y / 2 && dz < hitboxSize.z / 2;
         
         if (isHit) { 
+          if(player.team === projectile.ownerTeam){
+          projectile.isDead = true;
+          projectile.age = projectile.lifetime + 5;
+          continue
+        }
           player.takeDamage(projectile.damage);
           projectile.isDead = true;
           projectile.age = projectile.lifetime + 5;

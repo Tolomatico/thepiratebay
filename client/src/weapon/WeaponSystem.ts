@@ -4,12 +4,12 @@ import { Projectile } from "./Projectile";
 export abstract class WeaponSystem {
   protected scene: THREE.Scene;
   protected origin: THREE.Object3D;
-  protected cooldown = 4;
-  protected fireRate =500; 
-  protected damage: number = 0;
+  protected cooldown :number;
+  protected fireRate: number; 
+  protected damage: number ; 
   protected projectiles: Projectile[] = [];
   protected onShoot: (type:"left" | "right" | "front",direction:THREE.Vector3,id:string) => void;
-  protected quantity: number = 2;  
+  protected quantity: number ;  
   protected shotQueue: number = 0;    
   protected shotTimer: number = 0;
   protected instancedMesh: THREE.InstancedMesh;
@@ -19,11 +19,13 @@ export abstract class WeaponSystem {
   protected registry?: Map<string, Projectile>;
 
 
-  constructor(scene: THREE.Scene, origin: THREE.Object3D,onShoot: (type: "left" | "right" | "front", direction: THREE.Vector3,id:string) => void, registry?: Map<string, Projectile>) {
+  constructor(scene: THREE.Scene, origin: THREE.Object3D,onShoot: (type: "left" | "right" | "front", direction: THREE.Vector3,id:string) => void,fireRate:number, registry?: Map<string, Projectile>) {
     this.scene = scene;
     this.origin = origin;
     this.onShoot=onShoot;
     this.registry = registry;
+    this.fireRate = fireRate;
+    this.cooldown=this.fireRate;
     const geometry = new THREE.SphereGeometry(0.1, 8, 8);
     const material = new THREE.MeshBasicMaterial({ color: "black" });
     this.instancedMesh = new THREE.InstancedMesh(geometry, material, this.instanceCount);

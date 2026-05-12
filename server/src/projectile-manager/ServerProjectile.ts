@@ -8,6 +8,7 @@ export class ServerProjectile {
   id!: string;
   lobbyId: string | null = null;
   isDead = false;
+  ownerTeam: string;
 
   constructor(
     position: { x: number; y: number; z: number },
@@ -15,13 +16,16 @@ export class ServerProjectile {
     ownerId: string,
     damage: number,
     projectileId: string,
-    lobbyId: string | null
+    lobbyId: string | null,
+    ownerTeam: string
   ) {
     this.position = { ...position };
     this.ownerId = ownerId;
     this.damage = damage;
     this.id = projectileId;
     this.lobbyId = lobbyId;
+    this.ownerTeam = ownerTeam;
+    
     
     // Normalizar la dirección
     const length = Math.sqrt(direction.x * direction.x + direction.y * direction.y + direction.z * direction.z);

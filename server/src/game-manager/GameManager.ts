@@ -59,9 +59,10 @@ respawnPlayer(id: string, position: { x: number; y: number; z: number }, lobbyId
     ownerId: string,
     damage: number,
     projectileId: string,
-    lobbyId: string
+    lobbyId: string,
+    ownerTeam: string
   ) {
-    this.projectileManager.addProjectile(position, direction, ownerId, damage,projectileId,lobbyId);
+    this.projectileManager.addProjectile(position, direction, ownerId, damage,projectileId,lobbyId,ownerTeam);
   }
 
 

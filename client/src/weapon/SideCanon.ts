@@ -8,13 +8,22 @@ export class SideCanon extends WeaponSystem {
   private delayBetweenShots: number = 150;
 
   
-
-  constructor(scene: THREE.Scene, origin: THREE.Object3D,  onShoot: (type: "left" | "right" | "front", direction: THREE.Vector3,id:string) => void, leftOrRight: "left" | "right",quantity?:number, registry?: Map<string, Projectile>) {
-        super(scene, origin, onShoot, registry);
-        this.fireRate = 2000;
+  
+  constructor(
+  
+    scene: THREE.Scene,
+    origin: THREE.Object3D,
+    onShoot: (type: "left" | "right" | "front", direction: THREE.Vector3,id:string) => void, 
+    leftOrRight: "left" | "right",
+    damage: number,     
+    quantity: number,
+    fireRate: number,  
+    registry: Map<string, Projectile>) {
+        super(scene, origin, onShoot, fireRate,registry);
+        this.fireRate = fireRate ;
         this.leftOrRight = leftOrRight;
-         this.damage = 25;
-        if(quantity)this.quantity = quantity;
+         this.damage = damage 
+        this.quantity = quantity;
     }
 
 

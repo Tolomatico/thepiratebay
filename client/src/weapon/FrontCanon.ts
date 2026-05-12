@@ -4,10 +4,17 @@ import { WeaponSystem } from "./WeaponSystem";
 import { Projectile } from "./Projectile";
 
 export class FrontCanon extends WeaponSystem {
-  constructor(scene: THREE.Scene, origin: THREE.Object3D,onShoot: (type:"front" | "left" | "right",direction:THREE.Vector3,id:string  ) => void, registry?: Map<string, Projectile>) {
-    super(scene, origin,onShoot, registry);
-    this.damage = 50;
-    this.fireRate = 2000;
+  constructor(
+    scene: THREE.Scene,
+    origin: THREE.Object3D,
+    onShoot: (type: "front" | "left" | "right", direction: THREE.Vector3,id:string) => void, 
+    damage: number,
+    quantity: number,
+    fireRate: number,
+    registry: Map<string, Projectile>) {
+    super(scene, origin,onShoot,fireRate, registry);
+    this.damage = damage;
+    this.quantity = quantity;
   }
 
   shoot() {

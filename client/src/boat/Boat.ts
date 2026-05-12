@@ -48,12 +48,14 @@ export class Boat {
       registry?: Map<string, Projectile>,
     
     ) {
+      
        this.shipType = shipType;
        const stats = SHIPS[this.shipType];
        this.maxSpeed = stats.speed;
        this.boatHealth = stats.health;
        this.maxBoatHealth = stats.health;
        this.stadisctics={...stats}
+   
        
        this.onDeath = onDeath
         this.soundManager = new SoundManager();
@@ -66,21 +68,20 @@ export class Boat {
         this.visualBox = new THREE.Group();
         this.container.add(this.visualBox)
 
-        // // Hitbox visualizer
-        // const hitboxGeom = new THREE.BoxGeometry(10, 10, 10);
-        // const hitboxMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true, visible: true });
-        // const hitboxMesh = new THREE.Mesh(hitboxGeom, hitboxMat);
-        // // El modelo está centrado de tal forma que box.min.y es 0 en el visualBox
-        // // targetHeight es 10, así que el centro de la caja debe estar en y = 5
-        // hitboxMesh.position.y = 5;
-        // this.container.add(hitboxMesh);
+
 
         this.scene.add(this.container)
+
+
+        const { front, left, right } = this.stadisctics.cannons
 
 this.frontCanon = new FrontCanon(
   this.scene, 
   this.container,
   (type,direction,id) => this.onShoot(type,direction,id),
+  front.damage,
+  front.quantity,
+  front.fireRate,
   registry
 );
 this.leftCanon = new SideCanon(
@@ -88,7 +89,9 @@ this.leftCanon = new SideCanon(
   this.container,
   (type,direction,id) => this.onShoot(type,direction,id),
   "left",
-  undefined,
+  left.damage,
+  left.quantity,
+  left.fireRate,
   registry
 );
 this.rightCanon = new SideCanon(
@@ -96,7 +99,9 @@ this.rightCanon = new SideCanon(
   this.container,
   (type,direction,id) => this.onShoot(type,direction,id),
   "right",
-  undefined,
+  right.damage,
+  right.quantity,
+  right.fireRate,
   registry
 );
        
