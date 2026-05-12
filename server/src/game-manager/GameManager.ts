@@ -1,4 +1,4 @@
-import { PlayerData } from "../interfaces/player.js";
+import { PlayerData, SHIPS } from "../interfaces/player.js";
 import { Player } from "../player-manager/Player.js";
 import { ProjectileManager } from "../projectile-manager/ProjectileManager.js";
 
@@ -16,9 +16,12 @@ respawnPlayer(id: string, position: { x: number; y: number; z: number }, lobbyId
     if (!player) {
       return null;
     }
+
     player.lobbyId = lobbyId;
     player.position = position;
-    player.health = player.maxHealth;
+    const shipType = player.shipType || "pirate";
+    player.health = SHIPS[shipType].health;
+    player.isAlive = true;
     return player;
   }
 
@@ -34,7 +37,6 @@ respawnPlayer(id: string, position: { x: number; y: number; z: number }, lobbyId
     data.shipType!,
     data.position!,
     data.rotation!,
-    data.health!
   );
   this.players.set(player.id, player);
   return player;

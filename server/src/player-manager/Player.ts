@@ -1,4 +1,4 @@
-import { ShipType, Team } from "../interfaces/player.js";
+import { SHIPS, ShipType, Team } from "../interfaces/player.js";
 
 export class Player {
   id: string;
@@ -7,17 +7,22 @@ export class Player {
   shipType: ShipType;
   position: { x: number; y: number; z: number };
   rotation: { y: number };
-  maxHealth: number = 500;
-  health: number = 500;
   lobbyId: string | null = null;
-  constructor(id: string,username:string,team:Team,shipType:ShipType,position:{x:number,y:number,z:number},rotation:{y:number},health:number) {
+  health: number;
+  isAlive: boolean = true;
+  constructor(id: string,username:string,team:Team,shipType:ShipType,position:{x:number,y:number,z:number},rotation:{y:number}) {
     this.id = id;
     this.position = position;
     this.rotation = rotation;
-    this.health = health;
     this.username = username;
     this.team = team;
     this.shipType = shipType;
+    this.isAlive=true;
+    if (shipType) {
+      this.health = SHIPS[shipType].health;
+    } else {
+      this.health = 500; // default
+    }
   }
 
   move(position: { x: number; y: number; z: number }, rotation: { y: number }) {
@@ -25,8 +30,15 @@ export class Player {
     this.rotation = rotation;
   }
    takeDamage(amount: number) {
+    if(!this.isAlive) return;
     this.health -= amount;
-    if (this.health < 0) this.health = 0;
+    if (this.health < 0) {
+      this.health = 0
+      this.die()
+    }
+  }
+  die(){
+    this.isAlive=false;
   }
 
   getPlayerData() {

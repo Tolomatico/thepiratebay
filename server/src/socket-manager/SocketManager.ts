@@ -156,9 +156,8 @@ socket.on("playerRespawn", (data: { position: { x: number; y: number; z: number 
   if (lobbyId) {
     socket.to(lobbyId).emit("playerRespawn", { id: socket.id, position: data.position });
   }
-  // resetear vida en el servidor
-  const player = this.gameManager.getPlayer(socket.id);
-  if (player) player.health = 500;
+  // llamar a respawn para resetear vida y estado
+  this.gameManager.respawnPlayer(socket.id, data.position, lobbyId || "");
 });      
 
 socket.on("playerShoot", (data: { 
@@ -172,10 +171,9 @@ socket.on("playerShoot", (data: {
                     const lobbyId = [...socket.rooms].find(r => r !== socket.id);
                     if (!lobbyId) return;
                     const player = this.gameManager.getPlayer(socket.id);
-                    if (!player) return;
+                    if (!player || !player.isAlive) return;
                     const shipStats = SHIPS[player.shipType];
                     const canonStats = shipStats.cannons[data.type as "front" | "left" | "right"];
-                    console.log("data",data,"canonStats",canonStats)
                     this.gameManager.addProjectile(
                       data.position, 
                       data.direction, 

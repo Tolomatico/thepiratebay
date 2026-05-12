@@ -38,7 +38,6 @@ export class ProjectileManager {
 
 private checkCollisions(hits: { id: string; damage: number; health: number,projectileId:string }[]) {
     const players = this.gameManager.getState();
-
     for (const projectile of this.projectiles) {
       if (projectile.age > projectile.lifetime || projectile.isDead) continue;
 
@@ -57,9 +56,10 @@ private checkCollisions(hits: { id: string; damage: number; health: number,proje
         const dz = Math.abs(projectile.position.z - player.position.z);
         
         const isHit = dx < hitboxSize.x / 2 && dy < hitboxSize.y / 2 && dz < hitboxSize.z / 2;
-        
+
         
         if (isHit) { 
+          if(!player.isAlive) continue;
           if(player.team === projectile.ownerTeam){
           projectile.isDead = true;
           projectile.age = projectile.lifetime + 5;

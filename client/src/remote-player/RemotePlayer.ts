@@ -18,7 +18,6 @@ export class RemotePlayer {
   private soundManager: SoundManager;
   readonly id:string
   private hitbox: THREE.Box3 = new THREE.Box3();
-  private hitboxHelper: THREE.BoxHelper | null = null;
   private playerData: PlayerData;
   private stats: ShipStats;
   
@@ -50,11 +49,11 @@ export class RemotePlayer {
     this.container.add(this.visualBox);
     
 
-    // Hitbox visualizer
-    const hitboxGeom = new THREE.BoxGeometry(10, 10, 10);
-    const hitboxMat = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true, visible: true });
-    const hitboxMesh = new THREE.Mesh(hitboxGeom, hitboxMat);
-    this.container.add(hitboxMesh);
+    // // Hitbox visualizer
+    // const hitboxGeom = new THREE.BoxGeometry(10, 10, 10);
+    // const hitboxMat = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true, visible: true });
+    // const hitboxMesh = new THREE.Mesh(hitboxGeom, hitboxMat);
+    // this.container.add(hitboxMesh);
 
     scene.add(this.container);
     
@@ -106,24 +105,6 @@ getHitbox(): THREE.Box3 {
   
   this.hitbox.min.set(pos.x - halfX, pos.y, pos.z - halfZ);
   this.hitbox.max.set(pos.x + halfX, pos.y + hitbox.y, pos.z + halfZ);
-  
-  if (!this.hitboxHelper) {
-    const boxGeom = new THREE.BoxGeometry(1, 1, 1);
-    const boxMat = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
-    const boxMesh = new THREE.Mesh(boxGeom, boxMat);
-    this.scene.add(boxMesh);
-    this.hitboxHelper = new THREE.BoxHelper(boxMesh, 0xff0000);
-    this.scene.add(this.hitboxHelper);
-  }
-  
-  const center = new THREE.Vector3(
-    (this.hitbox.min.x + this.hitbox.max.x) / 2,
-    (this.hitbox.min.y + this.hitbox.max.y) / 2,
-    (this.hitbox.min.z + this.hitbox.max.z) / 2
-  );
-  this.hitboxHelper.position.copy(center);
-  this.hitboxHelper.scale.set(hitbox.x, hitbox.y, hitbox.z);
-  this.hitboxHelper.update();
   
   return this.hitbox;
 }

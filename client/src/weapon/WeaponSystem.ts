@@ -51,7 +51,6 @@ protected createProjectile(position: THREE.Vector3, direction: THREE.Vector3, sp
   const projectile = new Projectile(position, direction, this.damage, index, projectileId);
   this.projectiles.push(projectile);
   if (this.registry) this.registry.set(projectileId, projectile);
-  console.log(`[WeaponSystem] Created projectile ${projectileId}, index: ${index}, active: ${this.projectiles.length}`);
   return { projectile, id: projectileId }; 
 }
 

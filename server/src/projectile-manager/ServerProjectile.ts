@@ -36,7 +36,7 @@ export class ServerProjectile {
     } : { x: 0, y: 0, z: 0 };
     
     // Velocidad: 0.83 unidades/tick (~50 unidades/segundo)
-    const speed = 0.48
+    const speed = 0.52
     this.velocity = {
       x: normalized.x * speed,
       y: normalized.y * speed,
