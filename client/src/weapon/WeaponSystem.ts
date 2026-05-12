@@ -26,7 +26,7 @@ export abstract class WeaponSystem {
     this.registry = registry;
     this.fireRate = fireRate;
     this.cooldown=this.fireRate;
-    const geometry = new THREE.SphereGeometry(0.1, 8, 8);
+    const geometry = new THREE.SphereGeometry(0.15, 8, 8);
     const material = new THREE.MeshBasicMaterial({ color: "black" });
     this.instancedMesh = new THREE.InstancedMesh(geometry, material, this.instanceCount);
     this.instancedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -42,12 +42,16 @@ export abstract class WeaponSystem {
   }
 
 protected createProjectile(position: THREE.Vector3, direction: THREE.Vector3, specificId?: string): { projectile: Projectile, id: string } | null {
-  if (this.freeIndices.length === 0) return null;
+  if (this.freeIndices.length === 0) {
+    console.warn(`[WeaponSystem] Pool exhausted! Free: ${this.freeIndices.length}, Active: ${this.projectiles.length}`);
+    return null;
+  }
   const index = this.freeIndices.pop()!;
   const projectileId = specificId || crypto.randomUUID();
   const projectile = new Projectile(position, direction, this.damage, index, projectileId);
   this.projectiles.push(projectile);
   if (this.registry) this.registry.set(projectileId, projectile);
+  console.log(`[WeaponSystem] Created projectile ${projectileId}, index: ${index}, active: ${this.projectiles.length}`);
   return { projectile, id: projectileId }; 
 }
 

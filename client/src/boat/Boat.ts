@@ -30,6 +30,7 @@ export class Boat {
   private dimensions!: THREE.Vector3;
   private explosions: Explosion[] = [];
   private hitbox: THREE.Box3 = new THREE.Box3();
+  private hitboxHelper: THREE.BoxHelper | null = null;
   private soundManager: SoundManager;
   private onDeath: () => void
   private shipType: ShipType;
@@ -68,7 +69,11 @@ export class Boat {
         this.visualBox = new THREE.Group();
         this.container.add(this.visualBox)
 
-
+          // Hitbox visualizer
+           const hitboxGeom = new THREE.BoxGeometry( this.stadisctics.hitbox.x,  this.stadisctics.hitbox.y,  this.stadisctics.hitbox.z);
+           const hitboxMat = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true, visible: true });
+           const hitboxMesh = new THREE.Mesh(hitboxGeom, hitboxMat);
+           this.container.add(hitboxMesh);
 
         this.scene.add(this.container)
 
@@ -200,7 +205,33 @@ async loadModel( ) {
 }
 
 getHitbox(): THREE.Box3 {
-  return this.hitbox.setFromObject(this.container);
+  const pos = this.container.position;
+  const stats = this.stadisctics;
+  const halfX = stats.hitbox.x / 2;
+  const halfZ = stats.hitbox.z / 2;
+  
+  this.hitbox.min.set(pos.x - halfX, pos.y, pos.z - halfZ);
+  this.hitbox.max.set(pos.x + halfX, pos.y + stats.hitbox.y, pos.z + halfZ);
+  
+  if (!this.hitboxHelper) {
+    const boxGeom = new THREE.BoxGeometry(1, 1, 1);
+    const boxMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+    const boxMesh = new THREE.Mesh(boxGeom, boxMat);
+    this.scene.add(boxMesh);
+    this.hitboxHelper = new THREE.BoxHelper(boxMesh, 0x00ff00);
+    this.scene.add(this.hitboxHelper);
+  }
+  
+  const center = new THREE.Vector3(
+    (this.hitbox.min.x + this.hitbox.max.x) / 2,
+    (this.hitbox.min.y + this.hitbox.max.y) / 2,
+    (this.hitbox.min.z + this.hitbox.max.z) / 2
+  );
+  this.hitboxHelper.position.copy(center);
+  this.hitboxHelper.scale.set(stats.hitbox.x, stats.hitbox.y, stats.hitbox.z);
+  this.hitboxHelper.update();
+  
+  return this.hitbox;
 }
 getObject3D(): THREE.Object3D {
   return this.container;
@@ -305,7 +336,6 @@ const back = this.ocean.getWaveHeight(
 const targetPitch = (front - back) * 0.1;
 this.container.rotation.x += (targetPitch - this.container.rotation.x) * 0.1;
 
-   
 
     }
 }

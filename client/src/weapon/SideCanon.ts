@@ -47,7 +47,7 @@ export class SideCanon extends WeaponSystem {
     const shotIndex = this.quantity - this.shotQueue;
     const pos = new THREE.Vector3();
     this.origin.getWorldPosition(pos);
-    pos.y += 3;
+    pos.y += 5;
 
     const forward = new THREE.Vector3();
     forward.setFromMatrixColumn(this.origin.matrixWorld, 2);
@@ -78,7 +78,7 @@ export class SideCanon extends WeaponSystem {
   shootSingle(id?: string): void {
     const pos = new THREE.Vector3();
     this.origin.getWorldPosition(pos);
-    pos.y += 3;
+    pos.y += 5;
 
     const dir = new THREE.Vector3();
     if (this.leftOrRight === "left") {

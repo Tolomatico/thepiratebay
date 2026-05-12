@@ -29,7 +29,7 @@ export const SHIPS: Record<ShipType, ShipStats> = {
     health: 600,
     speed: 0.06,
     damage: 30,
-    hitbox: { x: 10, y: 10, z: 10 },
+    hitbox: { x: 3, y: 8, z: 12 },
     model: "/models/pirate.glb",
      cannons: {
       front: { damage: 50, fireRate: 1000, quantity: 1, speed: 0.15 },
@@ -41,7 +41,7 @@ export const SHIPS: Record<ShipType, ShipStats> = {
     health: 800,
     speed: 0.03,
     damage: 50,
-    hitbox: { x: 20, y: 20, z: 20 },
+    hitbox: { x: 8, y: 10, z: 16 },
     model: "/models/fragate.glb",
      cannons: {
       front: { damage: 50, fireRate: 1000, quantity: 1, speed: 0.15 },

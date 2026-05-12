@@ -1,6 +1,7 @@
 
 
 import { GameManager } from "../game-manager/GameManager.js";
+import { SHIPS } from "../interfaces/player.js";
 import { ServerProjectile } from "./ServerProjectile.js";
 
 
@@ -37,11 +38,7 @@ export class ProjectileManager {
 
 private checkCollisions(hits: { id: string; damage: number; health: number,projectileId:string }[]) {
     const players = this.gameManager.getState();
-    const friendlyFire = {
-      "red": ["red"],
-      "blue": ["blue"]
-    };
-    
+
     for (const projectile of this.projectiles) {
       if (projectile.age > projectile.lifetime || projectile.isDead) continue;
 
@@ -53,13 +50,14 @@ private checkCollisions(hits: { id: string; damage: number; health: number,proje
             continue; 
         }
         
-        const hitboxSize = { x: 10, y: 10, z: 10 };
+        const hitboxSize = { x: SHIPS[player.shipType].hitbox.x, y: SHIPS[player.shipType].hitbox.y, z: SHIPS[player.shipType].hitbox.z };
         
         const dx = Math.abs(projectile.position.x - player.position.x);
         const dy = Math.abs(projectile.position.y - (player.position.y + 3));
         const dz = Math.abs(projectile.position.z - player.position.z);
         
         const isHit = dx < hitboxSize.x / 2 && dy < hitboxSize.y / 2 && dz < hitboxSize.z / 2;
+        
         
         if (isHit) { 
           if(player.team === projectile.ownerTeam){

@@ -309,14 +309,13 @@ this.networkManager.onPlayerRespawn((data) => {
     this.boat.update(this.inputManager, time,delta)
     this.ocean.update(time)
     this.playerManager.update(delta);
-    
-    // IMPORTANTE: Actualizar enemigos para que sus posiciones no sean stale
+
     this.enemyManager.update(
       time, 
       this.boat.getActiveProjectiles(), 
       delta, 
       this.boat.position, 
-      new THREE.Vector3(), // Simplificado: velocidad del jugador
+      new THREE.Vector3(), 
       this.boat.getHitbox(), 
       (dmg) => this.boat.takeDamage(dmg)
     );

@@ -22,7 +22,7 @@ export class FrontCanon extends WeaponSystem {
   
   const pos = new THREE.Vector3();
   this.origin.getWorldPosition(pos);
-  pos.y += 3;
+  pos.y += 5;
   const dir = new THREE.Vector3();
   this.origin.getWorldDirection(dir);
   const result = this.createProjectile(pos, dir);
@@ -36,7 +36,7 @@ export class FrontCanon extends WeaponSystem {
     this.origin.updateWorldMatrix(true, true);
     const pos = new THREE.Vector3();
     this.origin.getWorldPosition(pos);
-    pos.y +=3;
+    pos.y +=5;
 
     const dir = new THREE.Vector3();
     this.origin.getWorldDirection(dir);
@@ -47,7 +47,7 @@ export class FrontCanon extends WeaponSystem {
   shootSingle(id?: string) {
     const pos = new THREE.Vector3();
     this.origin.getWorldPosition(pos);
-    pos.y += 3;
+    pos.y += 5;
 
     const dir = new THREE.Vector3();
     this.origin.getWorldDirection(dir);
