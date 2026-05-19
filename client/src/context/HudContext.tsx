@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useRef } from "react";
+import React, { createContext, useContext, useState, useRef } from "react";
 
 export interface EnemyHealthBar {
   id: string;

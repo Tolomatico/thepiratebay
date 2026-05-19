@@ -3,11 +3,6 @@ import { GameManager } from "../game-manager/GameManager.js";
 import { LobbyManager } from "../lobby-manager/LobbyManager.js";
 import { SHIPS } from "../interfaces/player.js";
 
-interface MoveData {
-  position: { x: number; y: number; z: number };
-  rotation: { y: number };
-}
-
 
 export class SocketManager {
     private io: Server;
@@ -81,7 +76,7 @@ emitHits(hits: { id: string; damage: number; health: number, projectileId: strin
          // Cliente abandona el lobby
             socket.on("leaveLobby", (data: { lobbyId: string }) => {
             const { lobbyId }=data
-            const lobby = this.lobbyManager.onLeave(socket.id,lobbyId);
+            this.lobbyManager.onLeave(socket.id,lobbyId);
             socket.leave(lobbyId);
             this.io.emit("lobbiesUpdated", this.lobbyManager.getLobbies());
             });

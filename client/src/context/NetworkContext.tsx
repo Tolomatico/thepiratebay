@@ -1,6 +1,5 @@
-import { createContext, useContext } from "react";
+import React, { createContext, useContext, useState } from "react";
 import { NetworkManager } from "../network/NetworkManager";
-import { useState } from "react";
 
 const NetworkContext = createContext<NetworkManager | null>(null);
 
