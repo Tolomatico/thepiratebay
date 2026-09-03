@@ -32,7 +32,7 @@ export class Player {
    takeDamage(amount: number) {
     if(!this.isAlive) return;
     this.health -= amount;
-    if (this.health < 0) {
+    if (this.health <= 0) {
       this.health = 0
       this.die()
     }

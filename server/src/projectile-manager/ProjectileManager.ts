@@ -51,15 +51,24 @@ private checkCollisions(hits: { id: string; damage: number; health: number,proje
         
         const hitboxSize = { x: SHIPS[player.shipType].hitbox.x, y: SHIPS[player.shipType].hitbox.y, z: SHIPS[player.shipType].hitbox.z };
         
-        const dx = Math.abs(projectile.position.x - player.position.x);
-        const dy = Math.abs(projectile.position.y - (player.position.y + 3));
-        const dz = Math.abs(projectile.position.z - player.position.z);
+        // Coordenadas relativas al barco rotado (Oriented Bounding Box)
+        const relX = projectile.position.x - player.position.x;
+        const relZ = projectile.position.z - player.position.z;
+        const rotY = player.rotation?.y || 0;
+        const cosA = Math.cos(-rotY);
+        const sinA = Math.sin(-rotY);
+
+        // Proyectar al sistema de coordenadas local del barco
+        const localX = Math.abs(relX * cosA - relZ * sinA);
+        const localZ = Math.abs(relX * sinA + relZ * cosA);
+        const localY = Math.abs(projectile.position.y - (player.position.y + 3));
         
-        const isHit = dx < hitboxSize.x / 2 && dy < hitboxSize.y / 2 && dz < hitboxSize.z / 2;
+        // Tolerancia de red de +1 unidad
+        const isHit = localX < (hitboxSize.x / 2 + 1.0) && localY < (hitboxSize.y / 2 + 1.5) && localZ < (hitboxSize.z / 2 + 1.0);
 
         
         if (isHit) { 
-          if(!player.isAlive) continue;
+          if(!player.isAlive || player.health <= 0) continue;
           if(player.team === projectile.ownerTeam){
           projectile.isDead = true;
           projectile.age = projectile.lifetime + 5;

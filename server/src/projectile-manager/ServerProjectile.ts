@@ -19,7 +19,8 @@ export class ServerProjectile {
     lobbyId: string | null,
     ownerTeam: string
   ) {
-    this.position = { ...position };
+    const spawnY = position.y <= 1 ? 3 : position.y;
+    this.position = { x: position.x, y: spawnY, z: position.z };
     this.ownerId = ownerId;
     this.damage = damage;
     this.id = projectileId;
@@ -35,26 +36,36 @@ export class ServerProjectile {
       z: direction.z / length
     } : { x: 0, y: 0, z: 0 };
     
-    // Velocidad: 0.83 unidades/tick (~50 unidades/segundo)
-    const speed = 0.6
+    // Velocidad: 0.60 unidades/tick sincronizado con cliente
+    const speed = 0.6;
     this.velocity = {
       x: normalized.x * speed,
-      y: normalized.y * speed,
+      y: normalized.y * speed + 0.035, // misma elevación que cliente
       z: normalized.z * speed,
     };
   }
 
   kill() {
+    this.isDead = true;
     this.age = this.lifetime + 1;
   }
 
   update(delta: number) {
-  const normalizedDelta = delta / 16.67; // ← normalizar a 60fpsw
-  this.position.x += this.velocity.x * normalizedDelta;
-  this.position.y += this.velocity.y * normalizedDelta;
-  this.position.z += this.velocity.z * normalizedDelta;
-  this.age += delta;
-}
+    const normalizedDelta = delta / 16.67; // normalizar a 60fps
+    this.position.x += this.velocity.x * normalizedDelta;
+    this.position.y += this.velocity.y * normalizedDelta;
+    this.position.z += this.velocity.z * normalizedDelta;
+
+    // Misma gravedad que cliente (0.00075)
+    this.velocity.y -= 0.00075 * normalizedDelta;
+
+    this.age += delta;
+
+    // Si cae al agua, muere inmediatamente y no puede registrar impacto
+    if (this.position.y <= 0) {
+      this.isDead = true;
+    }
+  }
 
   isAlive(): boolean {
     return this.age <= this.lifetime && !this.isDead;
