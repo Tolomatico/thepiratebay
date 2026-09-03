@@ -18,15 +18,15 @@ const io = new Server(server, {
 });
 
 const gameManager = new GameManager();
-const lobbyManager= new LobbyManager()
-const socketManager = new SocketManager(io,gameManager,lobbyManager);
-const gameLoop = new GameLoop("fixed",gameManager,(hits) => {
-  socketManager.emitHits(hits);
+const lobbyManager = new LobbyManager()
+const socketManager = new SocketManager(io, gameManager, lobbyManager);
+const gameLoop = new GameLoop("fixed", gameManager, (hits) => {
+    socketManager.emitHits(hits);
 });
 gameLoop.start();
 
 
 
-server.listen(3000, () => {
+server.listen(3001, () => {
     console.log("server running on port 3001");
 });
