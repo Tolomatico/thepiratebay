@@ -13,8 +13,14 @@ export class ModelManager {
     return new Promise((resolve, reject) => {
       this.loader.load(
         path,
-        (gltf) => {
+        (gltf: any) => {
           const model = gltf.scene;
+          model.traverse((child: any) => {
+            if ((child as THREE.Mesh).isMesh) {
+              child.castShadow = true;
+              child.receiveShadow = true;
+            }
+          });
           this.cache.set(path, model);
           resolve(model.clone(true));
         },

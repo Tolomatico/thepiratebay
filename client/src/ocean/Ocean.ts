@@ -18,10 +18,10 @@ export class Ocean {
           texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
         }
       ),
-      sunDirection: new THREE.Vector3(1, 1, 1).normalize(),
-      sunColor: 0xffffff,
-      waterColor: 0x0b3d4a,
-      distortionScale: 2.5,
+      sunDirection: new THREE.Vector3(60, 35, 45).normalize(),
+      sunColor: 0x665544,
+      waterColor: 0x0a2d3d,
+      distortionScale: 3.5,
       fog: true
     });
     this.water.rotation.x = -Math.PI / 2;

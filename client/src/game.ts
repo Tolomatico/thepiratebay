@@ -11,11 +11,13 @@ import type { NetworkManager } from './network/NetworkManager';
 import type { EnemyHealthBar, RemotePlayerHUD } from './context/HudContext';
 import  { SoundManager } from './soundmanager/SoundManager';
 import type { ShipType, Team } from './interfaces/player';
+import { RenderPipeline } from './graphics/RenderPipeline';
 
 export class GameEngine {
   private scene: THREE.Scene
   private camera: THREE.PerspectiveCamera
   private renderer: THREE.WebGLRenderer
+  private renderPipeline: RenderPipeline
   private boat!: Boat
   private inputManager!: InputManager
   private modelManager: ModelManager;
@@ -80,57 +82,28 @@ export class GameEngine {
     this.soundManager=new SoundManager()
     this.modelManager = new ModelManager();
     this.scene = new THREE.Scene()
-    this.scene.background = new THREE.Color(0x87CEEB);
     this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
     this.camera.name = "mainCamera";
     this.camera.position.set(0, 5, 5)
     this.camera.lookAt(0, 0, 0)
 
-
-   this.renderer = new THREE.WebGLRenderer({
-      antialias: true
-    })
-    this.renderer.setSize(window.innerWidth, window.innerHeight)
-    this.renderer.outputColorSpace = THREE.SRGBColorSpace
-    this.container.appendChild(this.renderer.domElement)
-    
-    const light = new THREE.DirectionalLight(0xffffff, 1.2)
-    light.position.set(20, 40, 20)
-    this.scene.add(light)
-   
-    const ambient = new THREE.AmbientLight(0xffffff, 0.35)
-    this.scene.add(ambient)
-    
-   const hemi = new THREE.HemisphereLight(
-      0xbfe3ff, // cielo
-      0x1b2b34, // rebote del mar
-      1.1
-  )
-  this.scene.add(hemi)
-
-
-this.scene.background = new THREE.Color(0x9fc9d8)
-
-this.scene.fog = new THREE.FogExp2(
-  0x9fc9d8,
-  0.0025
-)
+    // Inicializar el pipeline gráfico avanzado (Sombras, Luces, Cielo y Postprocesado)
+    this.renderPipeline = new RenderPipeline(this.container, this.scene, this.camera);
+    this.renderer = this.renderPipeline.renderer;
 
     // Multiplayer
     this.playerManager = new PlayerManager(this.scene, this.modelManager, this.projectileRegistry);
 
     // this.soundManager.playMusic();
-   this.controls = new Controlls(this.camera, this.renderer.domElement, null as any)
+    this.controls = new Controlls(this.camera, this.renderer.domElement, null as any)
     this.ocean = new Ocean(this.scene)
     this.enemyManager=new EnemyManager(this.scene,this.ocean,()=>this.soundManager.playShootSound())
     this.enemyManager.spawnEnemies(0)
     this.init()
     this.animate()
     window.addEventListener("resize", () => {
-    this.camera.aspect = window.innerWidth / window.innerHeight;
-    this.camera.updateProjectionMatrix();
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
-});
+      this.renderPipeline.resize(window.innerWidth, window.innerHeight);
+    });
   }
 
 private startRespawnCountdown() {
@@ -278,8 +251,8 @@ this.networkManager.onPlayerRespawn((data) => {
 
 
   dispose() {
-  this.renderer.dispose()
-}
+    this.renderPipeline.dispose();
+  }
 
 
   animate =()=>{
@@ -372,7 +345,8 @@ this.networkManager.onPlayerRespawn((data) => {
     
     this.setEnemyHealthBars(healthBars);
 
-    this.renderer.render(this.scene, this.camera)
-    requestAnimationFrame(this.animate)
+    const playerPos = this.boat ? this.boat.position : undefined;
+    this.renderPipeline.render(playerPos);
+    requestAnimationFrame(this.animate);
   }
 }
