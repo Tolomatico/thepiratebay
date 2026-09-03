@@ -10,16 +10,29 @@ export class PlayerManager {
     private modelManager: ModelManager;
     private players:Map<string,RemotePlayer> = new Map();
     private projectileRegistry: Map<string, Projectile>;
+    private onWaterHit?: (pos: THREE.Vector3) => void;
 
-    constructor(scene: THREE.Scene, modelManager: ModelManager, projectileRegistry: Map<string, Projectile>) {
+    constructor(
+        scene: THREE.Scene, 
+        modelManager: ModelManager, 
+        projectileRegistry: Map<string, Projectile>,
+        onWaterHit?: (pos: THREE.Vector3) => void
+    ) {
         this.scene = scene;
         this.modelManager = modelManager;
         this.projectileRegistry = projectileRegistry;
+        this.onWaterHit = onWaterHit;
     }
 
     addPlayer(playerData: PlayerData) {
         if (!this.players.has(playerData.id)) {
-            const remotePlayer = new RemotePlayer(this.scene, this.modelManager, playerData, this.projectileRegistry);
+            const remotePlayer = new RemotePlayer(
+                this.scene, 
+                this.modelManager, 
+                playerData, 
+                this.projectileRegistry,
+                this.onWaterHit
+            );
             this.players.set(playerData.id, remotePlayer);
         }
     }

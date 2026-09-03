@@ -32,7 +32,7 @@ export class Boat {
   private explosions: Explosion[] = [];
   private hitbox: THREE.Box3 = new THREE.Box3();
   private soundManager: SoundManager;
-  private wakeEffect: WakeEffect;
+  private wakeEffect!: WakeEffect;
   private onDeath: () => void
   private shipType: ShipType;
   private stadisctics: ShipStats;
@@ -48,7 +48,7 @@ export class Boat {
       onDeath: () => void,
       shipType: ShipType,
       registry?: Map<string, Projectile>,
-    
+      onWaterHit?: (pos: THREE.Vector3) => void
     ) {
       
        this.shipType = shipType;
@@ -70,13 +70,7 @@ export class Boat {
         this.visualBox = new THREE.Group();
         this.container.add(this.visualBox)
 
-          // // Hitbox visualizer
-          //  const hitboxGeom = new THREE.BoxGeometry( this.stadisctics.hitbox.x,  this.stadisctics.hitbox.y,  this.stadisctics.hitbox.z);
-          //  const hitboxMat = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true, visible: true });
-          //  const hitboxMesh = new THREE.Mesh(hitboxGeom, hitboxMat);
-          //  this.container.add(hitboxMesh);
-
-        this.scene.add(this.container)
+        this.scene.add(this.container);
         this.wakeEffect = new WakeEffect(this.scene);
 
 
@@ -89,7 +83,8 @@ this.frontCanon = new FrontCanon(
   front.damage,
   front.quantity,
   front.fireRate,
-  registry
+  registry,
+  onWaterHit
 );
 this.leftCanon = new SideCanon(
   this.scene, 
@@ -99,7 +94,8 @@ this.leftCanon = new SideCanon(
   left.damage,
   left.quantity,
   left.fireRate,
-  registry
+  registry,
+  onWaterHit
 );
 this.rightCanon = new SideCanon(
   this.scene, 
@@ -109,18 +105,23 @@ this.rightCanon = new SideCanon(
   right.damage,
   right.quantity,
   right.fireRate,
-  registry
+  registry,
+  onWaterHit
 );
        
        this.loadModel().then(() => {
         });
     }
 
+  private isDead: boolean = false;
+
     takeDamage(amount: number) {
+      if (this.isDead) return;
       this.boatHealth -= amount;
       if (this.boatHealth <= 0) {
         this.boatHealth = 0;
-        this.explode()
+        this.isDead = true;
+        this.explode();
       }
     }
 
@@ -226,6 +227,7 @@ get position(): THREE.Vector3 {
 }
 
 public respawn(position: THREE.Vector3) {
+  this.isDead = false;
   this.container.position.copy(position);
   this.boatHealth = this.maxBoatHealth;
   this.container.visible = true;
@@ -247,9 +249,10 @@ public respawn(position: THREE.Vector3) {
       return exp.isAlive();
     });
     
-    // this.wakeEffect.update(this.container.position, this.container.rotation.y, this.speed, delta);
-    
-       this.frontCanon.update(delta)
+    const backOffset = -(this.stadisctics.hitbox.z * 0.42);
+    this.wakeEffect.update(this.container.position, this.container.rotation.y, this.speed, delta, backOffset);
+
+    this.frontCanon.update(delta);
        this.leftCanon.update(delta)
        this.rightCanon.update(delta)
 

@@ -12,12 +12,14 @@ import type { EnemyHealthBar, RemotePlayerHUD } from './context/HudContext';
 import  { SoundManager } from './soundmanager/SoundManager';
 import type { ShipType, Team } from './interfaces/player';
 import { RenderPipeline } from './graphics/RenderPipeline';
+import { CombatEffectsManager } from './effects/CombatEffects';
 
 export class GameEngine {
   private scene: THREE.Scene
   private camera: THREE.PerspectiveCamera
   private renderer: THREE.WebGLRenderer
   private renderPipeline: RenderPipeline
+  public combatEffects: CombatEffectsManager;
   private boat!: Boat
   private inputManager!: InputManager
   private modelManager: ModelManager;
@@ -91,8 +93,16 @@ export class GameEngine {
     this.renderPipeline = new RenderPipeline(this.container, this.scene, this.camera);
     this.renderer = this.renderPipeline.renderer;
 
+    // Efectos de combate (fogonazos, humo, salpicaduras, astillas)
+    this.combatEffects = new CombatEffectsManager(this.scene);
+
     // Multiplayer
-    this.playerManager = new PlayerManager(this.scene, this.modelManager, this.projectileRegistry);
+    this.playerManager = new PlayerManager(
+      this.scene, 
+      this.modelManager, 
+      this.projectileRegistry,
+      (waterPos) => this.combatEffects.triggerWaterSplash(waterPos)
+    );
 
     // this.soundManager.playMusic();
     this.controls = new Controlls(this.camera, this.renderer.domElement, null as any)
@@ -106,17 +116,27 @@ export class GameEngine {
     });
   }
 
+  private respawnInterval: any = null;
+
 private startRespawnCountdown() {
+  if (this.respawnInterval) {
+    clearInterval(this.respawnInterval);
+    this.respawnInterval = null;
+  }
+
   let seconds = 10;
   this.setRespawnCountdown(seconds);
   this.inputManager.disable();
   
-  const interval = setInterval(() => {
+  this.respawnInterval = setInterval(() => {
     seconds--;
     this.setRespawnCountdown(seconds);
     
     if (seconds <= 0) {
-      clearInterval(interval);
+      if (this.respawnInterval) {
+        clearInterval(this.respawnInterval);
+        this.respawnInterval = null;
+      }
       this.respawn();
       this.inputManager.enable(); 
     }
@@ -168,9 +188,11 @@ private respawn() {
       this.ocean,
       (type:"front" | "left" | "right", direction: THREE.Vector3,id:string) => {
         this.soundManager.playShootSound();
+        const flashPos = this.boat.position.clone().add(new THREE.Vector3(0, 3, 0));
+        this.combatEffects.triggerMuzzleFlash(flashPos, direction);
         this.networkManager.emitShoot({ 
           type, 
-          position: { x: this.boat.position.x, y: this.boat.position.y, z: this.boat.position.z }, 
+          position: { x: this.boat.position.x, y: this.boat.position.y + 3, z: this.boat.position.z }, 
           direction: { x: direction.x, y: direction.y, z: direction.z }, 
           damage: 50 ,
           projectileId: id,
@@ -179,7 +201,8 @@ private respawn() {
       }, 
       () => this.startRespawnCountdown(),
       this.shipType as ShipType,
-       this.projectileRegistry,
+      this.projectileRegistry,
+      (waterPos) => this.combatEffects.triggerWaterSplash(waterPos)
     );
       // Controles del jugador
     this.controls.setTarget(this.boat.getObject3D())
@@ -201,7 +224,12 @@ private respawn() {
        this.playerManager.updatePlayer(data);
     });
     this.networkManager.onPlayerDamaged((data) => {
-      this.projectileRegistry.get(data.projectileId)?.kill();
+      const proj = this.projectileRegistry.get(data.projectileId);
+      const hitPos = proj ? proj.getPosition() : (data.id === this.networkManager.socket.id ? this.boat.position.clone().add(new THREE.Vector3(0, 2, 0)) : this.playerManager.getPlayer(data.id)?.getPosition().clone().add(new THREE.Vector3(0, 2, 0)));
+      if (hitPos) {
+        this.combatEffects.triggerWoodHit(hitPos);
+      }
+      proj?.kill();
       
       if (data.id === this.networkManager.socket.id) {
         this.soundManager.playHitSound();
@@ -222,7 +250,11 @@ private respawn() {
 
     this.networkManager.onPlayerShoot((data) => {
       const player = this.playerManager.getPlayer(data.id);
-      if (player) player.shoot(data.type, data.projectileId);
+      if (player) {
+        player.shoot(data.type, data.projectileId);
+        const flashPos = player.getPosition().add(new THREE.Vector3(0, 3, 0));
+        this.combatEffects.triggerMuzzleFlash(flashPos, new THREE.Vector3(0, 0, 1));
+      }
     });
 
 
@@ -282,6 +314,7 @@ this.networkManager.onPlayerRespawn((data) => {
     this.boat.update(this.inputManager, time,delta)
     this.ocean.update(time)
     this.playerManager.update(delta);
+    this.combatEffects.update(delta);
 
     this.enemyManager.update(
       time, 

@@ -11,8 +11,9 @@ export class FrontCanon extends WeaponSystem {
     damage: number,
     quantity: number,
     fireRate: number,
-    registry: Map<string, Projectile>) {
-    super(scene, origin,onShoot,fireRate, registry);
+    registry: Map<string, Projectile>,
+    onWaterHit?: (pos: THREE.Vector3) => void) {
+    super(scene, origin, onShoot, fireRate, registry, onWaterHit);
     this.damage = damage;
     this.quantity = quantity;
   }

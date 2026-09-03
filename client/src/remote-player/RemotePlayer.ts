@@ -7,6 +7,7 @@ import { Explosion } from "../explosion/Explosion";
 import { SoundManager } from "../soundmanager/SoundManager";
 import { SHIPS, type PlayerData, type ShipStats } from "../interfaces/player";
 import { PlayerModels } from "../constants";
+import { WakeEffect } from "../effects/WakeEffect";
 
 export class RemotePlayer {
   private visualBox: THREE.Group;
@@ -29,12 +30,16 @@ export class RemotePlayer {
   private leftCanon: SideCanon;
   private rightCanon: SideCanon;
   private frontCanon: FrontCanon;
+  private wakeEffect: WakeEffect;
+  private speed: number = 0;
+  private isDead: boolean = false;
 
   constructor(
     scene: THREE.Scene,
     modelManager: ModelManager,
     playerData: PlayerData,
-    registry?: Map<string, Projectile>
+    registry?: Map<string, Projectile>,
+    onWaterHit?: (pos: THREE.Vector3) => void
   ) {
     this.id=playerData.id
     this.soundManager=new SoundManager();
@@ -56,13 +61,14 @@ export class RemotePlayer {
     // this.container.add(hitboxMesh);
 
     scene.add(this.container);
+    this.wakeEffect = new WakeEffect(this.scene);
     
     this.loadModel();
     const { front, left, right } = this.stats.cannons
 
-    this.frontCanon = new FrontCanon(this.scene, this.container,() => this.onShoot("front"), front.damage,front.quantity,front.fireRate, registry);
-    this.leftCanon = new SideCanon(this.scene, this.container,() => this.onShoot("left"), "left", left.damage,left.quantity,left.fireRate, registry);
-    this.rightCanon = new SideCanon(this.scene, this.container,() => this.onShoot("right"), "right", right.damage,right.quantity,right.fireRate, registry);
+    this.frontCanon = new FrontCanon(this.scene, this.container, () => this.onShoot("front"), front.damage, front.quantity, front.fireRate, registry, onWaterHit);
+    this.leftCanon = new SideCanon(this.scene, this.container, () => this.onShoot("left"), "left", left.damage, left.quantity, left.fireRate, registry, onWaterHit);
+    this.rightCanon = new SideCanon(this.scene, this.container, () => this.onShoot("right"), "right", right.damage, right.quantity, right.fireRate, registry, onWaterHit);
   }
 
   private onShoot(type: "left" | "right" | "front") {
@@ -75,6 +81,7 @@ export class RemotePlayer {
   getTeam() { return this.playerData.team; }
 
 respawn(position: THREE.Vector3) {
+  this.isDead = false;
   this.health = this.maxHealth;
   this.container.position.copy(position);
   this.scene.add(this.container);
@@ -159,42 +166,63 @@ shoot(type: "front" | "left" | "right", projectileId: string) {
   
  }
 
-  updatePosition(position: { x: number; y: number; z: number }, rotation: { y: number }) {
-    this.container.position.set(position.x, position.y, position.z);
-    this.container.rotation.y = rotation.y
-  }
+   updatePosition(position: { x: number; y: number; z: number }, rotation: { y: number }) {
+     const dx = position.x - this.container.position.x;
+     const dz = position.z - this.container.position.z;
+     const dist = Math.sqrt(dx * dx + dz * dz);
+     
+     // Si hay movimiento y no es un teleport brusco
+     if (dist > 0.005 && dist < 8.0) {
+       this.speed = dist;
+     } else {
+       this.speed *= 0.9;
+     }
 
-  destroy() {
-    this.container.removeFromParent();
-  }
-  takeDamage(damage: number) {
-    this.health -= damage;
-    if (this.health <= 0) {
-        this.health = 0;
-        this.explode()
-      }
-  }
-  explode(){
-    this.soundManager.playDestroySound();
-    this.explosions.push(new Explosion(this.scene, this.container.position));
-    this.scene.remove(this.container)
-  }
+     this.container.position.set(position.x, position.y, position.z);
+     this.container.rotation.y = rotation.y;
+   }
 
-  getPosition(): THREE.Vector3 {
-    return this.container.position.clone();
-  }
+   destroy() {
+     this.wakeEffect?.dispose();
+     this.container.removeFromParent();
+   }
 
-  getHealthRatio(): number {
-    return Math.max(0, this.health / this.maxHealth);
-  }
+   takeDamage(damage: number) {
+     if (this.isDead) return;
+     this.health -= damage;
+     if (this.health <= 0) {
+       this.health = 0;
+       this.isDead = true;
+       this.explode();
+     }
+   }
 
-  update(delta: number) {
-    this.frontCanon.update(delta);
-    this.leftCanon.update(delta);
-    this.rightCanon.update(delta);
-    this.explosions = this.explosions.filter(exp => {
-    exp.update(delta);
-    return exp.isAlive();
-  });
-  }
+   explode(){
+     this.soundManager.playDestroySound();
+     this.explosions.push(new Explosion(this.scene, this.container.position));
+     this.scene.remove(this.container);
+   }
+
+   getPosition(): THREE.Vector3 {
+     return this.container.position.clone();
+   }
+
+   getHealthRatio(): number {
+     return Math.max(0, this.health / this.maxHealth);
+   }
+
+   update(delta: number) {
+     this.frontCanon.update(delta);
+     this.leftCanon.update(delta);
+     this.rightCanon.update(delta);
+     this.explosions = this.explosions.filter(exp => {
+       exp.update(delta);
+       return exp.isAlive();
+     });
+
+     if (this.wakeEffect && !this.isDead) {
+       const backOffset = -(this.stats.hitbox.z * 0.42);
+       this.wakeEffect.update(this.container.position, this.container.rotation.y, this.speed, delta, backOffset);
+     }
+   }
 }

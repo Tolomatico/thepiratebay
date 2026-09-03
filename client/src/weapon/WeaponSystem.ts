@@ -16,15 +16,23 @@ export abstract class WeaponSystem {
   protected freeIndices: number[] = [];
   protected id:string = crypto.randomUUID()
   protected registry?: Map<string, Projectile>;
+  protected onWaterHit?: (pos: THREE.Vector3) => void;
 
-
-  constructor(scene: THREE.Scene, origin: THREE.Object3D,onShoot: (type: "left" | "right" | "front", direction: THREE.Vector3,id:string) => void,fireRate:number, registry?: Map<string, Projectile>) {
+  constructor(
+    scene: THREE.Scene,
+    origin: THREE.Object3D,
+    onShoot: (type: "left" | "right" | "front", direction: THREE.Vector3, id: string) => void,
+    fireRate: number,
+    registry?: Map<string, Projectile>,
+    onWaterHit?: (pos: THREE.Vector3) => void
+  ) {
     this.scene = scene;
     this.origin = origin;
-    this.onShoot=onShoot;
+    this.onShoot = onShoot;
     this.registry = registry;
+    this.onWaterHit = onWaterHit;
     this.fireRate = fireRate;
-    this.cooldown=this.fireRate;
+    this.cooldown = this.fireRate;
     const geometry = new THREE.SphereGeometry(0.1, 8, 8);
     const material = new THREE.MeshStandardMaterial({
       color: 0x000000,
@@ -52,7 +60,7 @@ protected createProjectile(position: THREE.Vector3, direction: THREE.Vector3, sp
   if (this.freeIndices.length === 0) return null
   const index = this.freeIndices.pop()!;
   const projectileId = specificId || crypto.randomUUID();
-  const projectile = new Projectile(position, direction, this.damage, index, projectileId);
+  const projectile = new Projectile(position, direction, this.damage, index, projectileId, this.onWaterHit);
   this.projectiles.push(projectile);
   if (this.registry) this.registry.set(projectileId, projectile);
 
