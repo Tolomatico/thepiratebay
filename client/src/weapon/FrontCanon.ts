@@ -18,39 +18,47 @@ export class FrontCanon extends WeaponSystem {
   }
 
   shoot() {
-   if (!this.canShoot()) return;
-  
-  const pos = new THREE.Vector3();
-  this.origin.getWorldPosition(pos);
-  pos.y += 5;
-  const dir = new THREE.Vector3();
-  this.origin.getWorldDirection(dir);
-  const result = this.createProjectile(pos, dir);
-  if (!result) return;
+    if (!this.canShoot()) return;
 
-  this.onShoot("front", dir, result.id);
-  this.resetCooldown();
-}
+    this.origin.updateWorldMatrix(true, false);
+    const pos = new THREE.Vector3();
+    this.origin.getWorldPosition(pos);
+    pos.y += 3;
+    const dir = new THREE.Vector3();
+    this.origin.getWorldDirection(dir);
+
+    // Desplazar hacia la proa (adelante) para no nacer dentro del barco
+    pos.addScaledVector(dir, 6.0);
+
+    const result = this.createProjectile(pos, dir);
+    if (!result) return;
+
+    this.onShoot("front", dir, result.id);
+    this.resetCooldown();
+  }
 
   forceShoot() {
     this.origin.updateWorldMatrix(true, true);
     const pos = new THREE.Vector3();
     this.origin.getWorldPosition(pos);
-    pos.y +=5;
+    pos.y += 3;
 
     const dir = new THREE.Vector3();
     this.origin.getWorldDirection(dir);
+    pos.addScaledVector(dir, 6.0);
 
     this.createProjectile(pos, dir);
   }
 
   shootSingle(id?: string) {
+    this.origin.updateWorldMatrix(true, false);
     const pos = new THREE.Vector3();
     this.origin.getWorldPosition(pos);
-    pos.y += 5;
+    pos.y += 3;
 
     const dir = new THREE.Vector3();
     this.origin.getWorldDirection(dir);
+    pos.addScaledVector(dir, 6.0);
 
     this.createProjectile(pos, dir, id);
   }

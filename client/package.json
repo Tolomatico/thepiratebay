@@ -12,7 +12,9 @@
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,css,md}\""
   },
   "devDependencies": {
+    "@types/crypto-js": "^4.2.2",
     "@types/howler": "^2.2.12",
+    "@types/node": "^25.9.1",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@typescript-eslint/eslint-plugin": "^8.59.4",
@@ -28,6 +30,8 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.4",
+    "crypto": "^1.0.1",
+    "crypto-js": "^4.2.0",
     "howler": "^2.2.4",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",

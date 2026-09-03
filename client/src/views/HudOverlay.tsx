@@ -1,10 +1,16 @@
 import { CompassBar, EnemyBar, RespawnOverlay, PlayerHealthBar, EnemyCounter } from "../components";
 import { useGameHud } from "../context/HudContext";
+import ChatComponent from "../components/chat/ChatComponent";
 
 export function HudOverlay() {
   const { playerHealth, playerMaxHealth, playerRotation, playerPosition, respawnCountdown, enemyCount, enemyHealthBars, healthBarRefs, remotePlayers} = useGameHud();
   return (
     <div className="fixed inset-0 pointer-events-none z-50 font-sans">
+      {/* Top Left: Chat */}
+      <div className="absolute top-4 left-4 pointer-events-auto">
+        <ChatComponent />
+      </div>
+
       {/* Enemy Health Bars (In-World) */}
       {enemyHealthBars.map((bar) => (
         <EnemyBar key={bar.id} bar={bar} healthBarRefs={healthBarRefs} />

@@ -1,6 +1,5 @@
 import * as THREE from "three";
 import { Projectile } from "./Projectile";
-
 export abstract class WeaponSystem {
   protected scene: THREE.Scene;
   protected origin: THREE.Object3D;
@@ -15,7 +14,7 @@ export abstract class WeaponSystem {
   protected instancedMesh: THREE.InstancedMesh;
   protected instanceCount = 100;
   protected freeIndices: number[] = [];
-  protected id:string = crypto.randomUUID();
+  protected id:string = crypto.randomUUID()
   protected registry?: Map<string, Projectile>;
 
 
@@ -30,6 +29,7 @@ export abstract class WeaponSystem {
     const material = new THREE.MeshBasicMaterial({ color: "black" });
     this.instancedMesh = new THREE.InstancedMesh(geometry, material, this.instanceCount);
     this.instancedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.instancedMesh.frustumCulled = false;
     this.scene.add(this.instancedMesh);
       for (let i = 0; i < this.instanceCount; i++) {
     this.freeIndices.push(i);
@@ -51,6 +51,11 @@ protected createProjectile(position: THREE.Vector3, direction: THREE.Vector3, sp
   const projectile = new Projectile(position, direction, this.damage, index, projectileId);
   this.projectiles.push(projectile);
   if (this.registry) this.registry.set(projectileId, projectile);
+
+  const initialMatrix = new THREE.Matrix4().makeTranslation(position.x, position.y, position.z);
+  this.instancedMesh.setMatrixAt(index, initialMatrix);
+  this.instancedMesh.instanceMatrix.needsUpdate = true;
+
   return { projectile, id: projectileId }; 
 }
 

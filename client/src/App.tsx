@@ -1,13 +1,12 @@
 import { useState } from "react"
-
-import Menu from "./views/Menu"
-import LobbyList from "./views/LobbyList"
-import { Game } from "./views/Game"
-import Lobby from "./views/Lobby"
+import { HudProvider } from "./context/HudContext"
 import { NetworkProvider } from "./context/NetworkContext"
 import { UserProvider, useUser } from "./context/UserContext"
 import type { ILobby } from "./interfaces/lobby"
-import { HudProvider } from "./context/HudContext"
+import { Game } from "./views/Game"
+import Lobby from "./views/Lobby"
+import LobbyList from "./views/LobbyList"
+import Menu from "./views/Menu"
 
 type Screen = "menu" | "lobby-list" | "lobby" | "game"
 
@@ -19,7 +18,6 @@ function AppContent() {
   const handlePlay = (input: string) => {
     setUsername(input)
     setScreen("lobby-list") 
-    
   }
 
   const handleJoin = (lobby:ILobby) => {
@@ -42,7 +40,9 @@ function AppContent() {
 
   if (screen === "game")
     return <HudProvider><Game /></HudProvider>
-}
+  }
+
+
 
 export function App() {
   return (

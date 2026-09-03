@@ -1,5 +1,5 @@
-import { WeaponSystem } from "./WeaponSystem";
 import * as THREE from "three";
+import { WeaponSystem } from "./WeaponSystem";
 
 import { Projectile } from "./Projectile";
 
@@ -44,10 +44,11 @@ export class SideCanon extends WeaponSystem {
 
 
   private fireOne(): { direction: THREE.Vector3, id: string } | null {
+    this.origin.updateWorldMatrix(true, false);
     const shotIndex = this.quantity - this.shotQueue;
     const pos = new THREE.Vector3();
     this.origin.getWorldPosition(pos);
-    pos.y += 5;
+    pos.y += 3;
 
     const forward = new THREE.Vector3();
     forward.setFromMatrixColumn(this.origin.matrixWorld, 2);
@@ -61,6 +62,9 @@ export class SideCanon extends WeaponSystem {
     } else {
       dir.setFromMatrixColumn(this.origin.matrixWorld, 0).negate();
     }
+
+    // Desplazar lateralmente hacia afuera del casco del barco
+    pos.addScaledVector(dir, 2.5);
 
     const result = this.createProjectile(pos, dir);
     if (!result) return null;
@@ -76,9 +80,10 @@ export class SideCanon extends WeaponSystem {
   }
 
   shootSingle(id?: string): void {
+    this.origin.updateWorldMatrix(true, false);
     const pos = new THREE.Vector3();
     this.origin.getWorldPosition(pos);
-    pos.y += 5;
+    pos.y += 3;
 
     const dir = new THREE.Vector3();
     if (this.leftOrRight === "left") {
@@ -86,6 +91,8 @@ export class SideCanon extends WeaponSystem {
     } else {
       dir.setFromMatrixColumn(this.origin.matrixWorld, 0).negate();
     }
+
+    pos.addScaledVector(dir, 2.5);
 
     this.createProjectile(pos, dir, id);
   }

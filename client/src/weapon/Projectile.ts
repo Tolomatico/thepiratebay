@@ -18,7 +18,7 @@ export class Projectile {
     id: string
   ) {
     this.position = position.clone();
-    this.velocity = direction.clone().normalize().multiplyScalar(0.24);
+    this.velocity = direction.clone().normalize().multiplyScalar(0.30);
     this.damage = damage;
     this.instanceIndex = instanceIndex;
     this.id = id;
