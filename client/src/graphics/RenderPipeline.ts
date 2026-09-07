@@ -55,6 +55,24 @@ export class RenderPipeline {
 
     container.appendChild(this.renderer.domElement);
 
+    // Exponer el renderer y utilidades de rendimiento en la consola de Chrome
+    (window as any).__renderer = this.renderer;
+    (window as any).renderer = this.renderer;
+    (window as any).__renderPipeline = this;
+    (window as any).getDrawCalls = () => {
+      const stats = this.lastFrameStats;
+      console.table({
+        "Draw Calls (Calls)": stats.totalCalls,
+        "Triángulos": stats.triangles.toLocaleString(),
+        "Líneas": stats.lines,
+        "Puntos": stats.points,
+        "Geometrías (VRAM)": stats.geometries,
+        "Texturas (VRAM)": stats.textures,
+        "Frame": stats.frame
+      });
+      return stats;
+    };
+
     // 2. Sistema de Iluminación
     this.sunTarget = new THREE.Object3D();
     this.scene.add(this.sunTarget);
@@ -137,6 +155,16 @@ export class RenderPipeline {
     this.composer.addPass(this.fxaaPass);
   }
 
+  public lastFrameStats = {
+    totalCalls: 0,
+    triangles: 0,
+    lines: 0,
+    points: 0,
+    geometries: 0,
+    textures: 0,
+    frame: 0
+  };
+
   public render(targetPosition?: THREE.Vector3) {
     // Mantener el domo del cielo siempre centrado en la cámara
     this.sky.position.copy(this.camera.position);
@@ -152,7 +180,21 @@ export class RenderPipeline {
       );
     }
 
+    // Desactivamos autoReset para que Three.js no borre los stats en cada pase del EffectComposer
+    this.renderer.info.autoReset = false;
+    this.renderer.info.reset();
+
+    // Renderizar todos los pases del composer (Escena 3D + Bloom + Output + FXAA)
     this.composer.render();
+
+    // Guardar métricas reales acumuladas del cuadro completo
+    this.lastFrameStats.totalCalls = this.renderer.info.render.calls;
+    this.lastFrameStats.triangles = this.renderer.info.render.triangles;
+    this.lastFrameStats.lines = this.renderer.info.render.lines;
+    this.lastFrameStats.points = this.renderer.info.render.points;
+    this.lastFrameStats.geometries = this.renderer.info.memory.geometries;
+    this.lastFrameStats.textures = this.renderer.info.memory.textures;
+    this.lastFrameStats.frame = this.renderer.info.render.frame;
   }
 
   public resize(width: number, height: number) {

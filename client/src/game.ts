@@ -93,6 +93,11 @@ export class GameEngine {
     this.renderPipeline = new RenderPipeline(this.container, this.scene, this.camera);
     this.renderer = this.renderPipeline.renderer;
 
+    // Exponer referencias del juego en window para depuración en consola
+    (window as any).__gameEngine = this;
+    (window as any).__scene = this.scene;
+    (window as any).__camera = this.camera;
+
     // Efectos de combate (fogonazos, humo, salpicaduras, astillas)
     this.combatEffects = new CombatEffectsManager(this.scene);
 

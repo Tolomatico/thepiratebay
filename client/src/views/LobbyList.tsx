@@ -6,15 +6,16 @@ import type { ILobby } from "../interfaces/lobby";
 interface LobbyListProps {
   onJoin: (lobby: ILobby) => void
   onCreate: (lobby: ILobby) => void
+  onBack?: () => void
 }
 
-export default function LobbyList({ onCreate, onJoin }: LobbyListProps) {
+export default function LobbyList({ onCreate, onJoin, onBack }: LobbyListProps) {
   const [lobbyName, setLobbyName] = useState("")
   const [maxPlayers, setMaxPlayers] = useState(2)
   const [creating, setCreating] = useState(false)
 
   const network = useNetwork();
-  const { username } = useUser();
+  const { username, isGuest, gold } = useUser();
   const [lobbies, setLobbies] = useState<ILobby[]>([]);
 
   useEffect(() => {
@@ -38,8 +39,46 @@ export default function LobbyList({ onCreate, onJoin }: LobbyListProps) {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen gap-8 bg-gray-900">
-      <h1 className="text-3xl text-gray-100 uppercase tracking-wide font-bold">Lobbys Disponibles</h1>
+    <div className="relative flex flex-col items-center justify-center min-h-screen gap-6 bg-slate-950 p-4">
+      {/* Barra superior de estado del jugador */}
+      <div className="absolute top-4 left-4 right-4 max-w-5xl mx-auto flex items-center justify-between px-5 py-2.5 bg-slate-900/90 border border-slate-800 rounded-xl backdrop-blur-md shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-base">
+            ⚓
+          </div>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-slate-100">{username || "Capitán Anónimo"}</span>
+              <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border ${
+                isGuest 
+                  ? "bg-amber-950/40 text-amber-300 border-amber-800/60" 
+                  : "bg-emerald-950/40 text-emerald-300 border-emerald-800/60"
+              }`}>
+                {isGuest ? "Invitado" : "Capitán"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1.5 text-xs text-amber-300 font-semibold px-2.5 py-1 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+            <span>🪙</span>
+            <span>{gold} Oro</span>
+          </div>
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="text-xs text-slate-400 hover:text-slate-100 px-3 py-1.5 rounded-lg border border-slate-800 hover:border-slate-700 bg-slate-950/60 transition-all cursor-pointer"
+            >
+              Cambiar Capitán
+            </button>
+          )}
+        </div>
+      </div>
+
+      <h1 className="font-pirate text-3xl md:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-400 font-bold uppercase tracking-wider mt-12">
+        Salas de Combate
+      </h1>
 
       {/* Formulario crear lobby */}
       {creating ? (

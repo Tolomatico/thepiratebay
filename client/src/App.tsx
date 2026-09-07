@@ -12,11 +12,14 @@ type Screen = "menu" | "lobby-list" | "lobby" | "game"
 
 function AppContent() {
   const [screen, setScreen] = useState<Screen>("menu")
-  const { setUsername } = useUser()
+  const { setUsername, setIsGuest, setEmail, setAvatarUrl } = useUser()
   const [lobby,setLobby] = useState<ILobby>()
 
-  const handlePlay = (input: string) => {
+  const handlePlay = (input: string, isGuest: boolean = true, email?: string, avatar?: string) => {
     setUsername(input)
+    setIsGuest(isGuest)
+    if (email) setEmail(email)
+    if (avatar) setAvatarUrl(avatar)
     setScreen("lobby-list") 
   }
 
@@ -33,7 +36,7 @@ function AppContent() {
     return <Menu onPlay={handlePlay} />
 
   if (screen === "lobby-list")
-    return <LobbyList onCreate={handleJoin} onJoin={handleJoin} />
+    return <LobbyList onCreate={handleJoin} onJoin={handleJoin} onBack={() => setScreen("menu")} />
 
   if (screen === "lobby" && lobby)
     return <Lobby lobby={lobby} onStart={handleStart} />
