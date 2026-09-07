@@ -74,7 +74,8 @@ export class Boat {
         this.wakeEffect = new WakeEffect(this.scene);
 
 
-        const { front, left, right } = this.stadisctics.cannons
+        const { front, left, right } = this.stadisctics.cannons;
+        const reg = registry || new Map<string, Projectile>();
 
 this.frontCanon = new FrontCanon(
   this.scene, 
@@ -83,7 +84,7 @@ this.frontCanon = new FrontCanon(
   front.damage,
   front.quantity,
   front.fireRate,
-  registry,
+  reg,
   onWaterHit
 );
 this.leftCanon = new SideCanon(
@@ -94,7 +95,7 @@ this.leftCanon = new SideCanon(
   left.damage,
   left.quantity,
   left.fireRate,
-  registry,
+  reg,
   onWaterHit
 );
 this.rightCanon = new SideCanon(
@@ -105,7 +106,7 @@ this.rightCanon = new SideCanon(
   right.damage,
   right.quantity,
   right.fireRate,
-  registry,
+  reg,
   onWaterHit
 );
        
@@ -114,6 +115,10 @@ this.rightCanon = new SideCanon(
     }
 
   private isDead: boolean = false;
+
+    public getIsDead(): boolean {
+      return this.isDead;
+    }
 
     takeDamage(amount: number) {
       if (this.isDead) return;
@@ -125,13 +130,27 @@ this.rightCanon = new SideCanon(
       }
     }
 
-    
+    setHealth(amount: number) {
+      this.boatHealth = Math.max(0, amount);
+      if (this.boatHealth <= 0 && !this.isDead) {
+        this.isDead = true;
+        this.explode();
+      }
+    }
+
+    forceDeath() {
+      if (this.isDead) return;
+      this.boatHealth = 0;
+      this.isDead = true;
+      this.explode();
+    }
 
     explode(){
-   this.soundManager.playDestroySound();
+      if (this.isDead === false) this.isDead = true;
+      this.soundManager.playDestroySound();
       this.explosions.push(new Explosion(this.scene, this.container.position));
-      this.scene.remove(this.container)
-      this.onDeath()
+      this.scene.remove(this.container);
+      this.onDeath();
     }
 
     get size(): THREE.Vector3 {
@@ -228,6 +247,7 @@ get position(): THREE.Vector3 {
 
 public respawn(position: THREE.Vector3) {
   this.isDead = false;
+  this.speed = 0;
   this.container.position.copy(position);
   this.boatHealth = this.maxBoatHealth;
   this.container.visible = true;
@@ -249,6 +269,8 @@ public respawn(position: THREE.Vector3) {
       return exp.isAlive();
     });
     
+    if (this.isDead) return;
+
     const backOffset = -(this.stadisctics.hitbox.z * 0.42);
     this.wakeEffect.update(this.container.position, this.container.rotation.y, this.speed, delta, backOffset);
 

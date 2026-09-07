@@ -243,11 +243,33 @@ private respawn() {
       
       if (data.id === this.networkManager.socket.id) {
         this.soundManager.playHitSound();
-        this.boat.takeDamage(data.damage);
+        if (typeof data.health === "number") {
+          this.boat.setHealth(data.health);
+        } else {
+          this.boat.takeDamage(data.damage);
+        }
       } else {
         const remotePlayer = this.playerManager.getPlayer(data.id);
         if (remotePlayer) {
-          remotePlayer.takeDamage(data.damage);
+          if (typeof data.health === "number") {
+            remotePlayer.setHealth(data.health);
+          } else {
+            remotePlayer.takeDamage(data.damage);
+          }
+        }
+      }
+      this.updateRemotePlayersHUD();
+    });
+
+    this.networkManager.onPlayerKilled((kill) => {
+      if (kill.victimId === this.networkManager.socket.id) {
+        if (!this.boat.getIsDead()) {
+          this.boat.forceDeath();
+        }
+      } else {
+        const remotePlayer = this.playerManager.getPlayer(kill.victimId);
+        if (remotePlayer && !remotePlayer.getIsDead()) {
+          remotePlayer.forceDeath();
         }
       }
       this.updateRemotePlayersHUD();
@@ -282,10 +304,16 @@ this.networkManager.onPlayerJoined((data) => {
   }
 });
 this.networkManager.onPlayerRespawn((data) => {
-  const player = this.playerManager.getPlayer(data.id);
-  if (player) {
-    player.respawn(new THREE.Vector3(data.position.x, data.position.y, data.position.z));
-    this.updateRemotePlayersHUD();
+  if (data.id === this.networkManager.socket.id) {
+    if (this.boat.getIsDead()) {
+      this.boat.respawn(new THREE.Vector3(data.position.x, data.position.y, data.position.z));
+    }
+  } else {
+    const player = this.playerManager.getPlayer(data.id);
+    if (player) {
+      player.respawn(new THREE.Vector3(data.position.x, data.position.y, data.position.z));
+      this.updateRemotePlayersHUD();
+    }
   }
 });
   }

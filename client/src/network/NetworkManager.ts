@@ -1,6 +1,7 @@
 import { io, Socket } from "socket.io-client";
 import type { PlayerData, ScoreboardPlayer } from "../interfaces/player";
 import type { ChatMessage, KillEvent } from "../interfaces/chat";
+import type { MatchResult } from "../interfaces/match";
 
 
 
@@ -46,7 +47,8 @@ export class NetworkManager {
 
   // crear lobby
   createLobby(name: string, lobbyName: string, maxPlayers: number, callback: (lobby: any) => void) {
-    this.socket.emit("createLobby", { name, lobbyName, maxPlayers });
+    const userId = localStorage.getItem("pirate_user_id") || undefined;
+    this.socket.emit("createLobby", { name, lobbyName, maxPlayers, userId });
     this.socket.once("lobbyCreated", callback);
   }
 
@@ -66,7 +68,8 @@ export class NetworkManager {
         this.socket.off("lobbyJoined", callback);
       }
     });
-    this.socket.emit("joinLobby", { lobbyId, username });
+    const userId = localStorage.getItem("pirate_user_id") || undefined;
+    this.socket.emit("joinLobby", { lobbyId, username, userId });
   }
 
   emitReady() {
@@ -74,7 +77,8 @@ export class NetworkManager {
   }
 
   emitPlayerInfo(username: string, team: string, shipType: string) {
-    this.socket.emit("updatePlayerInfo", { username, team, shipType });
+    const userId = localStorage.getItem("pirate_user_id") || undefined;
+    this.socket.emit("updatePlayerInfo", { username, team, shipType, userId });
   }
 
   // salir del lobby
@@ -183,6 +187,18 @@ export class NetworkManager {
       this.socket.off("playerKilled", callback);
     } else {
       this.socket.off("playerKilled");
+    }
+  }
+
+  onMatchEnded(callback: (result: MatchResult) => void) {
+    this.socket.on("matchEnded", callback);
+  }
+
+  offMatchEnded(callback?: (result: MatchResult) => void) {
+    if (callback) {
+      this.socket.off("matchEnded", callback);
+    } else {
+      this.socket.off("matchEnded");
     }
   }
 }

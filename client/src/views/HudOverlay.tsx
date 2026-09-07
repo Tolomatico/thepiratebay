@@ -1,4 +1,4 @@
-import { CompassBar, EnemyBar, RespawnOverlay, PlayerHealthBar, EnemyCounter, Killfeed } from "../components";
+import { CompassBar, EnemyBar, RespawnOverlay, PlayerHealthBar, EnemyCounter, Killfeed, MatchGoldWidget } from "../components";
 import { useGameHud } from "../context/HudContext";
 import { useNetwork } from "../context/NetworkContext";
 import ChatComponent from "../components/chat/ChatComponent";
@@ -6,9 +6,10 @@ import ChatComponent from "../components/chat/ChatComponent";
 interface HudOverlayProps {
   onOpenMenu?: () => void;
   onToggleScoreboard?: () => void;
+  goldInHold?: number;
 }
 
-export function HudOverlay({ onOpenMenu, onToggleScoreboard }: HudOverlayProps) {
+export function HudOverlay({ onOpenMenu, onToggleScoreboard, goldInHold = 0 }: HudOverlayProps) {
   const { playerHealth, playerMaxHealth, playerRotation, playerPosition, respawnCountdown, enemyCount, enemyHealthBars, healthBarRefs, remotePlayers} = useGameHud();
   const network = useNetwork();
   return (
@@ -39,6 +40,11 @@ export function HudOverlay({ onOpenMenu, onToggleScoreboard }: HudOverlayProps) 
         playerPosition={playerPosition}
         remotePlayers={remotePlayers.current}
       />
+
+      {/* Bottom Left: Oro en Bodega & Riesgo de Pérdida */}
+      <div className="absolute bottom-32 left-10 pointer-events-auto z-40">
+        <MatchGoldWidget goldInHold={goldInHold} />
+      </div>
 
       {/* Bottom Left: Player Health */}
       <PlayerHealthBar health={playerHealth} maxHealth={playerMaxHealth} />

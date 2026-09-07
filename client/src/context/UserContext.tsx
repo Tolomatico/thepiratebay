@@ -2,6 +2,8 @@ import { createContext, useContext, useState } from "react";
 import { type ShipType, type Team } from "../interfaces/player";
 
 interface UserContextValue {
+  userId: string;
+  setUserId: (id: string) => void;
   username: string;
   setUsername: (name: string) => void;
   team: Team;
@@ -23,6 +25,9 @@ interface UserContextValue {
 const UserContext = createContext<UserContextValue | null>(null);
 
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
+  const [userId, setUserId] = useState<string>(() => {
+    return localStorage.getItem("pirate_user_id") || "";
+  });
   const [username, setUsername] = useState<string>(() => {
     return localStorage.getItem("pirate_username") || "";
   });
@@ -45,6 +50,11 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     const saved = localStorage.getItem("pirate_level");
     return saved ? parseInt(saved, 10) : 1;
   });
+
+  const updateUserId = (id: string) => {
+    setUserId(id);
+    localStorage.setItem("pirate_user_id", id);
+  };
 
   const updateUsername = (name: string) => {
     setUsername(name);
@@ -69,14 +79,32 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const updateGold = (amt: number) => {
     setGold(amt);
     localStorage.setItem("pirate_gold", String(amt));
+    const userStr = localStorage.getItem("pirate_user");
+    if (userStr) {
+      try {
+        const u = JSON.parse(userStr);
+        u.gold = amt;
+        localStorage.setItem("pirate_user", JSON.stringify(u));
+      } catch {}
+    }
   };
 
   const updateLevel = (lvl: number) => {
     setLevel(lvl);
     localStorage.setItem("pirate_level", String(lvl));
+    const userStr = localStorage.getItem("pirate_user");
+    if (userStr) {
+      try {
+        const u = JSON.parse(userStr);
+        u.level = lvl;
+        localStorage.setItem("pirate_user", JSON.stringify(u));
+      } catch {}
+    }
   };
 
   const values: UserContextValue = {
+    userId,
+    setUserId: updateUserId,
     username,
     setUsername: updateUsername,
     team,

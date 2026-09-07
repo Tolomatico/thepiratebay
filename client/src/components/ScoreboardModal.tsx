@@ -37,6 +37,7 @@ export function ScoreboardModal({
         damageDealt: 0,
         health: playerHealth,
         isAlive: playerHealth > 0,
+        goldInHold: 0,
       });
     }
 
@@ -140,6 +141,7 @@ export function ScoreboardModal({
                     <th className="py-2 px-1 text-center" title="Bajas / Kills">⚔️ K</th>
                     <th className="py-2 px-1 text-center" title="Muertes / Deaths">☠️ D</th>
                     <th className="py-2 px-1 text-center" title="Daño Infligido">💥 Daño</th>
+                    <th className="py-2 px-1 text-center" title="Oro en Bodega (Riesgo al morir)">🪙 Oro</th>
                     <th className="py-2 px-2 text-right">Estado</th>
                   </tr>
                 </thead>
@@ -178,6 +180,9 @@ export function ScoreboardModal({
                           <td className="py-2.5 px-1 text-center text-amber-300 font-mono">
                             {player.damageDealt || 0}
                           </td>
+                          <td className="py-2.5 px-1 text-center text-yellow-400 font-mono font-bold">
+                            {player.goldInHold || 0}
+                          </td>
                           <td className="py-2.5 px-2 text-right">
                             {player.isAlive ? (
                               <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-semibold">
@@ -195,7 +200,7 @@ export function ScoreboardModal({
                     })
                   ) : (
                     <tr>
-                      <td colSpan={6} className="py-6 text-center text-slate-500 italic">
+                      <td colSpan={7} className="py-6 text-center text-slate-500 italic">
                         No hay navíos azules en combate
                       </td>
                     </tr>
@@ -228,6 +233,7 @@ export function ScoreboardModal({
                     <th className="py-2 px-1 text-center" title="Bajas / Kills">⚔️ K</th>
                     <th className="py-2 px-1 text-center" title="Muertes / Deaths">☠️ D</th>
                     <th className="py-2 px-1 text-center" title="Daño Infligido">💥 Daño</th>
+                    <th className="py-2 px-1 text-center" title="Oro en Bodega (Riesgo al morir)">🪙 Oro</th>
                     <th className="py-2 px-2 text-right">Estado</th>
                   </tr>
                 </thead>
@@ -266,6 +272,9 @@ export function ScoreboardModal({
                           <td className="py-2.5 px-1 text-center text-amber-300 font-mono">
                             {player.damageDealt || 0}
                           </td>
+                          <td className="py-2.5 px-1 text-center text-yellow-400 font-mono font-bold">
+                            {player.goldInHold || 0}
+                          </td>
                           <td className="py-2.5 px-2 text-right">
                             {player.isAlive ? (
                               <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-semibold">
@@ -283,7 +292,7 @@ export function ScoreboardModal({
                     })
                   ) : (
                     <tr>
-                      <td colSpan={6} className="py-6 text-center text-slate-500 italic">
+                      <td colSpan={7} className="py-6 text-center text-slate-500 italic">
                         No hay navíos rojos en combate
                       </td>
                     </tr>

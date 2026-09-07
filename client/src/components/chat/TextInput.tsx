@@ -4,7 +4,7 @@ interface TextInputProps {
   channel: "all" | "team";
   onToggleChannel: () => void;
   onSendMessage: (text: string) => void;
-  inputRef?: RefObject<HTMLInputElement>;
+  inputRef?: RefObject<HTMLInputElement | null>;
 }
 
 export default function TextInput({

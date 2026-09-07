@@ -26,10 +26,11 @@ export default function Menu({ onPlay }: MenuProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const { setUsername, setIsGuest, setEmail, setAvatarUrl, setGold, setLevel } =
+  const { setUserId, setUsername, setIsGuest, setEmail, setAvatarUrl, setGold, setLevel } =
     useUser();
 
   const handleSessionSuccess = (session: {
+    id?: string;
     username: string;
     isGuest: boolean;
     email?: string;
@@ -37,6 +38,7 @@ export default function Menu({ onPlay }: MenuProps) {
     gold: number;
     level: number;
   }) => {
+    if (session.id) setUserId(session.id);
     setUsername(session.username);
     setIsGuest(session.isGuest);
     if (session.email) setEmail(session.email);

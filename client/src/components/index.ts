@@ -6,3 +6,5 @@ export * from "./RespawnOverlay";
 export * from "./GamePauseMenu";
 export * from "./ScoreboardModal";
 export * from "./Killfeed";
+export * from "./PostMatchModal";
+export * from "./MatchGoldWidget";

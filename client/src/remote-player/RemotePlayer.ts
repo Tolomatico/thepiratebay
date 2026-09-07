@@ -64,11 +64,12 @@ export class RemotePlayer {
     this.wakeEffect = new WakeEffect(this.scene);
     
     this.loadModel();
-    const { front, left, right } = this.stats.cannons
+    const { front, left, right } = this.stats.cannons;
+    const reg = registry || new Map<string, Projectile>();
 
-    this.frontCanon = new FrontCanon(this.scene, this.container, () => this.onShoot("front"), front.damage, front.quantity, front.fireRate, registry, onWaterHit);
-    this.leftCanon = new SideCanon(this.scene, this.container, () => this.onShoot("left"), "left", left.damage, left.quantity, left.fireRate, registry, onWaterHit);
-    this.rightCanon = new SideCanon(this.scene, this.container, () => this.onShoot("right"), "right", right.damage, right.quantity, right.fireRate, registry, onWaterHit);
+    this.frontCanon = new FrontCanon(this.scene, this.container, () => this.onShoot("front"), front.damage, front.quantity, front.fireRate, reg, onWaterHit);
+    this.leftCanon = new SideCanon(this.scene, this.container, () => this.onShoot("left"), "left", left.damage, left.quantity, left.fireRate, reg, onWaterHit);
+    this.rightCanon = new SideCanon(this.scene, this.container, () => this.onShoot("right"), "right", right.damage, right.quantity, right.fireRate, reg, onWaterHit);
   }
 
   private onShoot(type: "left" | "right" | "front") {
@@ -80,11 +81,18 @@ export class RemotePlayer {
   getUsername() { return this.playerData.username; }
   getTeam() { return this.playerData.team; }
 
+  public getIsDead(): boolean {
+    return this.isDead;
+  }
+
 respawn(position: THREE.Vector3) {
   this.isDead = false;
   this.health = this.maxHealth;
   this.container.position.copy(position);
-  this.scene.add(this.container);
+  this.container.visible = true;
+  if (!this.scene.getObjectById(this.container.id)) {
+    this.scene.add(this.container);
+  }
 }
 
 
@@ -187,42 +195,61 @@ shoot(type: "front" | "left" | "right", projectileId: string) {
      this.container.removeFromParent();
    }
 
-   takeDamage(damage: number) {
-     if (this.isDead) return;
-     this.health -= damage;
-     if (this.health <= 0) {
-       this.health = 0;
-       this.isDead = true;
-       this.explode();
-     }
-   }
+    takeDamage(damage: number) {
+      if (this.isDead) return;
+      this.health -= damage;
+      if (this.health <= 0) {
+        this.health = 0;
+        this.isDead = true;
+        this.explode();
+      }
+    }
 
-   explode(){
-     this.soundManager.playDestroySound();
-     this.explosions.push(new Explosion(this.scene, this.container.position));
-     this.scene.remove(this.container);
-   }
+    setHealth(amount: number) {
+      this.health = Math.max(0, amount);
+      if (this.health <= 0 && !this.isDead) {
+        this.isDead = true;
+        this.explode();
+      }
+    }
 
-   getPosition(): THREE.Vector3 {
-     return this.container.position.clone();
-   }
+    forceDeath() {
+      if (this.isDead) return;
+      this.health = 0;
+      this.isDead = true;
+      this.explode();
+    }
 
-   getHealthRatio(): number {
-     return Math.max(0, this.health / this.maxHealth);
-   }
+    explode(){
+      this.isDead = true;
+      this.soundManager.playDestroySound();
+      this.explosions.push(new Explosion(this.scene, this.container.position));
+      this.scene.remove(this.container);
+    }
 
-   update(delta: number) {
-     this.frontCanon.update(delta);
-     this.leftCanon.update(delta);
-     this.rightCanon.update(delta);
-     this.explosions = this.explosions.filter(exp => {
-       exp.update(delta);
-       return exp.isAlive();
-     });
+    getPosition(): THREE.Vector3 {
+      return this.container.position.clone();
+    }
 
-     if (this.wakeEffect && !this.isDead) {
-       const backOffset = -(this.stats.hitbox.z * 0.42);
-       this.wakeEffect.update(this.container.position, this.container.rotation.y, this.speed, delta, backOffset);
-     }
-   }
+    getHealthRatio(): number {
+      return Math.max(0, this.health / this.maxHealth);
+    }
+
+    update(delta: number) {
+      this.explosions = this.explosions.filter(exp => {
+        exp.update(delta);
+        return exp.isAlive();
+      });
+
+      if (this.isDead) return;
+
+      this.frontCanon.update(delta);
+      this.leftCanon.update(delta);
+      this.rightCanon.update(delta);
+
+      if (this.wakeEffect) {
+        const backOffset = -(this.stats.hitbox.z * 0.42);
+        this.wakeEffect.update(this.container.position, this.container.rotation.y, this.speed, delta, backOffset);
+      }
+    }
 }
