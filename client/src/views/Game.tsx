@@ -1,17 +1,90 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { GameEngine } from '../game'
 import { useNetwork } from '../context/NetworkContext';
 import { HudOverlay } from './HudOverlay';
+import { GamePauseMenu } from '../components/GamePauseMenu';
+import { ScoreboardModal } from '../components/ScoreboardModal';
 import { useGameHud } from '../context/HudContext';
 import { useUser } from '../context/UserContext';
-import type { ShipType, Team } from '../interfaces/player';
+import type { ShipType, Team, ScoreboardPlayer } from '../interfaces/player';
 
+interface GameProps {
+  onLeaveGame?: () => void;
+}
 
-export function Game() {
+export function Game({ onLeaveGame }: GameProps) {
   const canvasRef = useRef<HTMLDivElement>(null)
+  const engineRef = useRef<GameEngine | null>(null)
+  const [isPauseMenuOpen, setIsPauseMenuOpen] = useState(false)
+  const [isScoreboardOpen, setIsScoreboardOpen] = useState(false)
+  const [scoreboard, setScoreboard] = useState<ScoreboardPlayer[]>([])
   const network = useNetwork();
-  const { setPlayerHealth, setPlayerMaxHealth, setPlayerRotation, setPlayerPosition, setRespawnCountdown, setEnemyCount, setEnemyHealthBars, healthBarRefs, remotePlayers } = useGameHud();
-   const {username,team,shipType} = useUser();
+  const { setPlayerHealth, setPlayerMaxHealth, setPlayerRotation, setPlayerPosition, setRespawnCountdown, setEnemyCount, setEnemyHealthBars, healthBarRefs, remotePlayers, playerHealth } = useGameHud();
+  const { username, team, shipType } = useUser();
+
+  const togglePauseMenu = useCallback((open?: boolean) => {
+    setIsPauseMenuOpen((prev) => {
+      const next = typeof open === "boolean" ? open : !prev;
+      if (engineRef.current) {
+        if (next) {
+          engineRef.current.disableInput();
+        } else {
+          engineRef.current.enableInput();
+        }
+      }
+      return next;
+    });
+  }, []);
+
+  const handleLeaveGame = useCallback(() => {
+    setIsPauseMenuOpen(false);
+    setIsScoreboardOpen(false);
+    if (engineRef.current) {
+      engineRef.current.dispose();
+      engineRef.current = null;
+    }
+    onLeaveGame?.();
+  }, [onLeaveGame]);
+
+  // Sincronizar marcador con el servidor
+  useEffect(() => {
+    network.onScoreboardUpdated((data: ScoreboardPlayer[]) => {
+      setScoreboard(data);
+    });
+
+    network.getScoreboard();
+
+    return () => {
+      network.socket.off("scoreboardUpdated");
+    };
+  }, [network]);
+
+  // Manejo de teclas: ESC para Menú y TAB para Marcador de Escuadras
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        togglePauseMenu();
+      } else if (event.key === "Tab" || event.code === "Tab") {
+        event.preventDefault();
+        setIsScoreboardOpen(true);
+      }
+    };
+
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (event.key === "Tab" || event.code === "Tab") {
+        event.preventDefault();
+        setIsScoreboardOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [togglePauseMenu]);
+
   useEffect(() => {
     if (!canvasRef.current) return
 
@@ -30,17 +103,35 @@ export function Game() {
       setEnemyHealthBars,
       healthBarRefs.current,
       remotePlayers.current
+    )
 
-    ) // Three.js se monta acá
+    engineRef.current = engine;
    
-    //ts ignore
-    return () => engine.dispose() // cleanup al desmontar
+    return () => {
+      engine.dispose();
+      engineRef.current = null;
+    }
   }, [])
 
   return (
-   <div className="relative w-screen h-screen">
+    <div className="relative w-screen h-screen overflow-hidden">
       <div ref={canvasRef} className="w-full h-full" />
-      <HudOverlay  />
+      <HudOverlay
+        onOpenMenu={() => togglePauseMenu(true)}
+        onToggleScoreboard={() => setIsScoreboardOpen((prev) => !prev)}
+      />
+      <GamePauseMenu
+        isOpen={isPauseMenuOpen}
+        onResume={() => togglePauseMenu(false)}
+        onLeaveGame={handleLeaveGame}
+      />
+      <ScoreboardModal
+        isOpen={isScoreboardOpen}
+        onClose={() => setIsScoreboardOpen(false)}
+        scoreboard={scoreboard}
+        currentSocketId={network.socket?.id}
+        playerHealth={playerHealth}
+      />
     </div>
   )
 }

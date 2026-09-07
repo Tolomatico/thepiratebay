@@ -9,18 +9,23 @@ import type { ShipType, Team } from "../interfaces/player"
 interface LobbyProps {
   lobby: ILobby
   onStart: () => void
+  onLeave?: () => void
 }
 
-export default function Lobby({ lobby, onStart }: LobbyProps) {
+export default function Lobby({ lobby, onStart, onLeave }: LobbyProps) {
   const [currentLobby, setCurrentLobby] = useState<ILobby>(lobby)
   const network = useNetwork()
   const { username, shipType, setShipType, team, setTeam } = useUser()
 
   useEffect(() => {
     network.onLobbyUpdated((lobby: ILobby) => setCurrentLobby(lobby))
-    network.joinLobby(lobby.id as string, (newLobby: ILobby) => {
+    network.joinLobby(lobby.id as string, username, (newLobby: ILobby) => {
       network.setLobbyId(newLobby.id as string);
       setCurrentLobby(newLobby);
+      const myPlayer = newLobby.players?.find(p => p.id === network.socket.id);
+      if (myPlayer?.team) {
+        setTeam(myPlayer.team);
+      }
     });
 
     return () => {
@@ -32,7 +37,7 @@ export default function Lobby({ lobby, onStart }: LobbyProps) {
     if (username && lobby?.id) {
       network.emitPlayerInfo(username, team, shipType)
     }
-  }, [team, shipType, username])
+  }, [team, shipType, username, lobby?.id, network])
 
   return (
     <div className="relative flex flex-col items-center min-h-screen p-4 sm:p-6 md:p-8 bg-[#0a0f14] overflow-y-auto">
@@ -43,6 +48,23 @@ export default function Lobby({ lobby, onStart }: LobbyProps) {
       </div>
 
       <div className="relative z-10 flex flex-col items-center w-full max-w-5xl gap-6 sm:gap-8 md:gap-10 py-4">
+        {/* Top bar with Leave button */}
+        <div className="w-full flex items-center justify-between">
+          {onLeave && (
+            <button
+              type="button"
+              onClick={onLeave}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-900/80 hover:bg-slate-800 border border-slate-700 hover:border-slate-600 rounded-xl text-slate-300 hover:text-white text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer"
+            >
+              <span>⬅</span>
+              <span>Salir de la Sala</span>
+            </button>
+          )}
+          <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider ml-auto">
+            Sala #{currentLobby?.id ? String(currentLobby.id).slice(0, 8) : ""}
+          </div>
+        </div>
+
         <div className="flex flex-col items-center gap-2">
           <h1 className="text-5xl font-black text-white uppercase tracking-tighter italic">
             Lobby: <span className="text-green-500">{currentLobby?.lobbyName}</span>
@@ -98,12 +120,22 @@ export default function Lobby({ lobby, onStart }: LobbyProps) {
         <div className="flex flex-col gap-12 w-full">
           <ShipSelector 
             selectedShip={shipType as ShipType} 
-            onSelect={setShipType} 
+            onSelect={(newShip) => {
+              setShipType(newShip);
+              if (username && lobby?.id) {
+                network.emitPlayerInfo(username, team, newShip);
+              }
+            }} 
           />
           
           <TeamSelector 
             selectedTeam={team as Team} 
-            onSelect={setTeam} 
+            onSelect={(newTeam) => {
+              setTeam(newTeam);
+              if (username && lobby?.id) {
+                network.emitPlayerInfo(username, newTeam, shipType);
+              }
+            }} 
           />
         </div>
 

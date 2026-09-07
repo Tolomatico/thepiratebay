@@ -1,5 +1,5 @@
 import { io, Socket } from "socket.io-client";
-import type { PlayerData } from "../interfaces/player";
+import type { PlayerData, ScoreboardPlayer } from "../interfaces/player";
 
 
 
@@ -50,14 +50,22 @@ export class NetworkManager {
   }
 
   // unirse a lobby
-  joinLobby(lobbyId: string, callback: (lobby: any) => void) {
+  joinLobby(lobbyId: string, usernameOrCallback: string | ((lobby: any) => void), maybeCallback?: (lobby: any) => void) {
+    let username: string | undefined;
+    let callback: (lobby: any) => void;
+    if (typeof usernameOrCallback === "function") {
+      callback = usernameOrCallback;
+    } else {
+      username = usernameOrCallback;
+      callback = maybeCallback || (() => {});
+    }
     this.socket.once("lobbyJoined", callback);
     this.socket.once("lobbyError", (msg) => {
       if (msg.includes("error")) {
         this.socket.off("lobbyJoined", callback);
       }
     });
-    this.socket.emit("joinLobby", { lobbyId });
+    this.socket.emit("joinLobby", { lobbyId, username });
   }
 
   emitReady() {
@@ -69,8 +77,12 @@ export class NetworkManager {
   }
 
   // salir del lobby
-  leaveLobby(lobbyId: string) {
-    this.socket.emit("leaveLobby", { lobbyId });
+  leaveLobby(lobbyId?: string) {
+    const id = lobbyId || this.currentLobbyId;
+    if (id) {
+      this.socket.emit("leaveLobby", { lobbyId: id });
+    }
+    this.currentLobbyId = null;
   }
 
   // escuchar actualizaciones
@@ -135,5 +147,13 @@ export class NetworkManager {
     this.socket.on("playerShoot", (data) => {
       callback(data);
     });
+  }
+
+  getScoreboard() {
+    this.socket.emit("getScoreboard");
+  }
+
+  onScoreboardUpdated(callback: (players: ScoreboardPlayer[]) => void) {
+    this.socket.on("scoreboardUpdated", callback);
   }
 }

@@ -49,4 +49,7 @@ export class Controlls{
         return this.offset.clone();
     }
     
+    dispose() {
+        this.controls.dispose();
+    }
 }

@@ -5,13 +5,17 @@ export class InputManager {
     disabled: boolean = false;
 
     
+    private onKeyDown = (event: KeyboardEvent) => {
+        this.isKeyPressed(event.code);
+    };
+
+    private onKeyUp = (event: KeyboardEvent) => {
+        this.isKeyReleased(event.code);
+    };
+
     constructor() {
-        window.addEventListener("keydown",(event:KeyboardEvent)=>{
-            this.isKeyPressed(event.code)
-        })
-        window.addEventListener("keyup",(event:KeyboardEvent)=>{
-            this.isKeyReleased(event.code)
-        })
+        window.addEventListener("keydown", this.onKeyDown);
+        window.addEventListener("keyup", this.onKeyUp);
     }
 
     disable() {
@@ -21,6 +25,12 @@ export class InputManager {
 
     enable() {
         this.disabled = false;
+    }
+
+    dispose() {
+        window.removeEventListener("keydown", this.onKeyDown);
+        window.removeEventListener("keyup", this.onKeyUp);
+        this.keysPressed = [];
     }
 
     isKeyPressed(key:string){

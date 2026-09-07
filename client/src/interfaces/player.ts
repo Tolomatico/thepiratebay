@@ -11,6 +11,19 @@ export interface PlayerData {
   health: number;
 }
 
+export interface ScoreboardPlayer {
+  id: string;
+  username: string;
+  team: Team;
+  shipType: ShipType;
+  kills: number;
+  deaths: number;
+  damageDealt: number;
+  health: number;
+  isAlive: boolean;
+  ping?: number;
+}
+
 export interface ShipStats {
   health: number;
   speed: number;

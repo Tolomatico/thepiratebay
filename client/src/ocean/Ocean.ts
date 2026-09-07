@@ -29,7 +29,7 @@ export class Ocean {
     scene.add(this.water);
   }
 
-  getWaveHeight(x: number, z: number, time: number): number {
+  getWaveHeight(_x: number, _z: number, _time: number): number {
     return 0;
   }
 

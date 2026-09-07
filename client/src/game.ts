@@ -51,6 +51,10 @@ export class GameEngine {
   private username:string
   private team:string
   private shipType:string
+  private isDisposed = false;
+  private animationFrameId: number | null = null;
+  private onResize: () => void;
+
   constructor(
     container: HTMLDivElement,
     networkManager: NetworkManager,
@@ -116,9 +120,10 @@ export class GameEngine {
     this.enemyManager.spawnEnemies(0)
     this.init()
     this.animate()
-    window.addEventListener("resize", () => {
+    this.onResize = () => {
       this.renderPipeline.resize(window.innerWidth, window.innerHeight);
-    });
+    };
+    window.addEventListener("resize", this.onResize);
   }
 
   private respawnInterval: any = null;
@@ -287,12 +292,41 @@ this.networkManager.onPlayerRespawn((data) => {
 
 
 
-  dispose() {
-    this.renderPipeline.dispose();
+  public disableInput() {
+    this.inputManager?.disable();
   }
 
+  public enableInput() {
+    this.inputManager?.enable();
+  }
 
-  animate =()=>{
+  dispose() {
+    this.isDisposed = true;
+    if (this.animationFrameId !== null) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
+    if (this.respawnInterval) {
+      clearInterval(this.respawnInterval);
+      this.respawnInterval = null;
+    }
+    window.removeEventListener("resize", this.onResize);
+    this.inputManager?.dispose();
+    this.controls?.dispose();
+    this.renderPipeline.dispose();
+
+    // Limpiar listeners de red específicos del juego
+    this.networkManager.socket.off("playerMoved");
+    this.networkManager.socket.off("playerDamaged");
+    this.networkManager.socket.off("playerDisconnected");
+    this.networkManager.socket.off("playerShoot");
+    this.networkManager.socket.off("currentPlayers");
+    this.networkManager.socket.off("playerJoined");
+    this.networkManager.socket.off("playerRespawn");
+  }
+
+  animate = () => {
+    if (this.isDisposed) return;
     // Actualizar el tiempo
     this.timer.update();
     const time = this.timer.getElapsed() * 1000;
@@ -385,6 +419,8 @@ this.networkManager.onPlayerRespawn((data) => {
 
     const playerPos = this.boat ? this.boat.position : undefined;
     this.renderPipeline.render(playerPos);
-    requestAnimationFrame(this.animate);
+    if (!this.isDisposed) {
+      this.animationFrameId = requestAnimationFrame(this.animate);
+    }
   }
 }
