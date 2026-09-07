@@ -33,8 +33,15 @@ const memoryUsers: Map<string, UserRow> = new Map();
 
 export class UserRepository {
   async findById(id: string): Promise<UserRow | null> {
+    if (!id) return null;
+
     if (!isDbConnected) {
       return memoryUsers.get(id) || null;
+    }
+
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id)) {
+      return null;
     }
 
     const res = await query<UserRow>(
@@ -197,6 +204,98 @@ export class UserRepository {
 
     // Eliminar o marcar el usuario de invitado antiguo
     await query("DELETE FROM users WHERE id = $1 AND is_guest = TRUE;", [guestId]);
+  }
+
+  async addMatchRewards(
+    identifier: string,
+    rewards: {
+      goldEarned: number;
+      xpEarned: number;
+      kills: number;
+      deaths: number;
+      damageDealt: number;
+      isWinner: boolean;
+    }
+  ): Promise<UserRow | null> {
+    if (!isDbConnected) {
+      let user = memoryUsers.get(identifier);
+      if (!user) {
+        for (const u of memoryUsers.values()) {
+          if (u.username.toLowerCase() === identifier.toLowerCase()) {
+            user = u;
+            break;
+          }
+        }
+      }
+      if (user) {
+        user.gold += rewards.goldEarned;
+        user.xp += rewards.xpEarned;
+        user.level = Math.max(1, Math.floor(user.xp / 500) + 1);
+        user.updated_at = new Date();
+      }
+      return user || null;
+    }
+
+    try {
+      // Buscar usuario por ID (si es UUID válido) o por username
+      let user: UserRow | null = null;
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+      if (uuidRegex.test(identifier)) {
+        user = await this.findById(identifier);
+      }
+
+      if (!user) {
+        user = await this.findByUsername(identifier);
+      }
+
+      if (!user) {
+        console.warn(`⚠️ [DB] Usuario "${identifier}" no encontrado en DB para aplicar recompensas.`);
+        return null;
+      }
+
+      const newXp = (user.xp || 0) + rewards.xpEarned;
+      const newLevel = Math.max(1, Math.floor(newXp / 500) + 1);
+
+      // Actualizar usuario en DB
+      const res = await query<UserRow>(
+        `UPDATE users
+         SET gold = gold + $1,
+             xp = $2,
+             level = $3,
+             updated_at = NOW()
+         WHERE id = $4
+         RETURNING *;`,
+        [rewards.goldEarned, newXp, newLevel, user.id]
+      );
+
+      // Actualizar o insertar estadísticas acumuladas
+      await query(
+        `INSERT INTO user_stats (user_id, total_kills, total_deaths, matches_played, matches_won, damage_dealt, updated_at)
+         VALUES ($1, $2, $3, 1, $4, $5, NOW())
+         ON CONFLICT (user_id) DO UPDATE
+         SET total_kills = user_stats.total_kills + EXCLUDED.total_kills,
+             total_deaths = user_stats.total_deaths + EXCLUDED.total_deaths,
+             matches_played = user_stats.matches_played + 1,
+             matches_won = user_stats.matches_won + EXCLUDED.matches_won,
+             damage_dealt = user_stats.damage_dealt + EXCLUDED.damage_dealt,
+             updated_at = NOW();`,
+        [
+          user.id,
+          rewards.kills,
+          rewards.deaths,
+          rewards.isWinner ? 1 : 0,
+          rewards.damageDealt,
+        ]
+      );
+
+      console.log(`💰 [DB] Recompensas aplicadas para "${user.username}": +${rewards.goldEarned} oro (Total: ${res.rows[0]?.gold}), +${rewards.xpEarned} XP (Nivel ${newLevel})`);
+
+      return res.rows[0] || null;
+    } catch (err) {
+      console.error("❌ [DB] Error al aplicar recompensas de partida:", err);
+      return null;
+    }
   }
 }
 

@@ -75,6 +75,7 @@ private checkCollisions(hits: { id: string; damage: number; health: number; proj
           continue
         }
           const wasAlive = player.isAlive;
+          const victimInitialGold = player.goldInHold;
           player.takeDamage(projectile.damage);
           projectile.isDead = true;
           projectile.age = projectile.lifetime + 5;
@@ -83,9 +84,13 @@ private checkCollisions(hits: { id: string; damage: number; health: number; proj
           const attacker = this.gameManager.getPlayer(projectile.ownerId);
           if (attacker) {
             attacker.damageDealt += projectile.damage;
+
             if (wasAlive && !player.isAlive) {
               attacker.kills++;
               player.deaths++;
+              // Botín exclusivo por destruir navío rival: 75 base + 50% saqueado de la bodega de la víctima
+              const stolenBounty = Math.floor(victimInitialGold * 0.5);
+              attacker.goldInHold += (75 + stolenBounty);
               killInfo = {
                 id: crypto.randomUUID(),
                 killerId: attacker.id,

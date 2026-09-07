@@ -2,6 +2,7 @@ import { SHIPS, ShipType, Team } from "../interfaces/player.js";
 
 export class Player {
   id: string;
+  userId?: string;
   username: string;
   team: Team;
   shipType: ShipType;
@@ -13,8 +14,10 @@ export class Player {
   kills: number = 0;
   deaths: number = 0;
   damageDealt: number = 0;
-  constructor(id: string,username:string,team:Team,shipType:ShipType,position:{x:number,y:number,z:number},rotation:{y:number}) {
+  goldInHold: number = 0;
+  constructor(id: string,username:string,team:Team,shipType:ShipType,position:{x:number,y:number,z:number},rotation:{y:number}, userId?: string) {
     this.id = id;
+    this.userId = userId;
     this.position = position;
     this.rotation = rotation;
     this.username = username;
@@ -24,11 +27,25 @@ export class Player {
     this.kills = 0;
     this.deaths = 0;
     this.damageDealt = 0;
-    if (shipType) {
+    this.goldInHold = 0;
+    if (shipType && SHIPS[shipType]) {
       this.health = SHIPS[shipType].health;
     } else {
-      this.health = 500; // default
+      this.health = 600; // default
     }
+  }
+
+  setShipType(shipType: ShipType) {
+    this.shipType = shipType;
+    if (SHIPS[shipType]) {
+      this.health = SHIPS[shipType].health;
+    }
+  }
+
+  resetHealth() {
+    const type = this.shipType || "pirate";
+    this.health = SHIPS[type]?.health || 600;
+    this.isAlive = true;
   }
 
   move(position: { x: number; y: number; z: number }, rotation: { y: number }) {
@@ -39,12 +56,15 @@ export class Player {
     if(!this.isAlive) return;
     this.health -= amount;
     if (this.health <= 0) {
-      this.health = 0
-      this.die()
+      this.health = 0;
+      this.die();
     }
   }
   die(){
-    this.isAlive=false;
+    this.health = 0;
+    this.isAlive = false;
+    const lost = Math.floor(this.goldInHold * 0.5);
+    this.goldInHold = Math.max(0, this.goldInHold - lost);
   }
 
   getPlayerData() {
@@ -69,7 +89,8 @@ export class Player {
       deaths: this.deaths,
       damageDealt: this.damageDealt,
       health: this.health,
-      isAlive: this.isAlive
+      isAlive: this.isAlive,
+      goldInHold: this.goldInHold,
     };
   }
 }

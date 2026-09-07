@@ -21,6 +21,7 @@ export interface ScoreboardPlayer {
   damageDealt: number;
   health: number;
   isAlive: boolean;
+  goldInHold?: number;
   ping?: number;
 }
 

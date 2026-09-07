@@ -3,6 +3,9 @@ import { GameManager } from "../game-manager/GameManager.js";
 import { LobbyManager } from "../lobby-manager/LobbyManager.js";
 import { SHIPS } from "../interfaces/player.js";
 import { ChatMessage, KillEvent } from "../interfaces/chat.js";
+import { MatchResult } from "../interfaces/match.js";
+import { matchRepository } from "../repositories/MatchRepository.js";
+import { userRepository } from "../repositories/UserRepository.js";
 
 
 export class SocketManager {
@@ -20,6 +23,29 @@ export class SocketManager {
         if (!lobbyId) return;
         const scoreboard = this.gameManager.getLobbyScoreboard(lobbyId);
         this.io.to(lobbyId).emit("scoreboardUpdated", scoreboard);
+    }
+
+    async handleMatchEnded(matchResult: MatchResult) {
+        console.log(`🏆 [FIN DE COMBATE] Escuadra ganadora: ${matchResult.winnerTeam.toUpperCase()} en "${matchResult.lobbyName}" (${matchResult.blueKills} - ${matchResult.redKills})`);
+
+        // Notificar inmediatamente a toda la sala
+        this.io.to(matchResult.lobbyId).emit("matchEnded", matchResult);
+
+        // 1. Guardar historial en PostgreSQL
+        await matchRepository.recordMatch(matchResult);
+
+        // 2. Acreditar recompensas a cada jugador en PostgreSQL
+        for (const p of matchResult.players) {
+            const identifier = p.userId || p.username;
+            await userRepository.addMatchRewards(identifier, {
+                goldEarned: p.goldEarned,
+                xpEarned: p.xpEarned,
+                kills: p.kills,
+                deaths: p.deaths,
+                damageDealt: p.damageDealt,
+                isWinner: p.isWinner
+            });
+        }
     }
 
     emitHits(hits: { id: string; damage: number; health: number; projectileId: string; kill?: KillEvent }[]) {
@@ -43,6 +69,13 @@ export class SocketManager {
         }
         for (const lobbyId of affectedLobbies) {
             this.broadcastScoreboard(lobbyId);
+
+            // Verificar si el combate alcanzó la condición de victoria (2 bajas para test rápido)
+            const lobby = this.lobbyManager.getLobby(lobbyId);
+            const matchResult = this.gameManager.checkMatchEnd(lobbyId, lobby?.lobbyName || "Batalla Naval", 2);
+            if (matchResult) {
+                this.handleMatchEnded(matchResult);
+            }
         }
     }
 
@@ -59,34 +92,39 @@ export class SocketManager {
            })
            
          // Crear lobby
-           socket.on("createLobby",(data:{name:string,lobbyName:string,maxPlayers:number})=>{
-                  const {name,maxPlayers,lobbyName}=data
+           socket.on("createLobby",(data:{name:string,lobbyName:string,maxPlayers:number,userId?:string})=>{
+                  const {name,maxPlayers,lobbyName,userId} = data;
                   const lobby= this.lobbyManager.onCreate(socket.id,name,lobbyName,maxPlayers)
                   socket.join(lobby.id)
                   socket.emit("lobbyCreated",lobby)
                   this.io.emit("lobbiesUpdated",this.lobbyManager.getLobbies())
 
-                  const existingGamePlayer = this.gameManager.getPlayer(socket.id);
+                  const hostPlayer = lobby.players.find(p => p.id === socket.id);
+                  const shipType = hostPlayer?.shipType || "pirate";
+                  let existingGamePlayer = this.gameManager.getPlayer(socket.id);
                   if (!existingGamePlayer) {
-                      this.gameManager.addPlayer({
+                      existingGamePlayer = this.gameManager.addPlayer({
                           id: socket.id,
+                          userId: userId,
                           username: name || "Host",
                           team: "red",
-                          shipType: "pirate",
+                          shipType: shipType,
                           position: { x: 0, y: 0, z: 0 },
                           rotation: { y: 0 },
                       });
                   } else {
+                      if (userId) existingGamePlayer.userId = userId;
                       existingGamePlayer.username = name || "Host";
                       existingGamePlayer.team = "red";
+                      existingGamePlayer.setShipType(shipType);
+                      existingGamePlayer.resetHealth();
                   }
-                  const playerInGame = this.gameManager.getPlayer(socket.id);
-                  if (playerInGame) playerInGame.lobbyId = lobby.id;
+                  if (existingGamePlayer) existingGamePlayer.lobbyId = lobby.id;
            })
 
 // Cliente se une al lobby
-             socket.on("joinLobby",(data:{ lobbyId:string, username?: string })=>{
-                 const { lobbyId, username } = data;
+             socket.on("joinLobby",(data:{ lobbyId:string, username?: string, userId?: string })=>{
+                 const { lobbyId, username, userId } = data;
                  const isAlreadyInLobby = this.lobbyManager.getLobby(lobbyId)?.players.some(p => p.id === socket.id);
                  const lobby = this.lobbyManager.onJoin(socket.id, lobbyId, username);
                 if (!lobby) {
@@ -97,23 +135,26 @@ export class SocketManager {
                 socket.emit("lobbyJoined",lobby)
                 
                 const lobbyPlayer = lobby.players.find(p => p.id === socket.id);
-                const existingGamePlayer = this.gameManager.getPlayer(socket.id);
+                const shipType = lobbyPlayer?.shipType || "pirate";
+                let existingGamePlayer = this.gameManager.getPlayer(socket.id);
                 if (!existingGamePlayer) {
-                    this.gameManager.addPlayer({
+                    existingGamePlayer = this.gameManager.addPlayer({
                         id: socket.id,
+                        userId: userId,
                         username: lobbyPlayer?.username || username || "Jugador",
                         team: lobbyPlayer?.team || "blue",
-                        shipType: lobbyPlayer?.shipType || "pirate",
+                        shipType: shipType,
                         position: { x: 0, y: 0, z: 0 },
                         rotation: { y: 0 },
                     });
                 } else if (lobbyPlayer) {
+                    if (userId) existingGamePlayer.userId = userId;
                     existingGamePlayer.team = lobbyPlayer.team;
-                    existingGamePlayer.shipType = lobbyPlayer.shipType;
+                    existingGamePlayer.setShipType(shipType);
+                    existingGamePlayer.resetHealth();
                     existingGamePlayer.username = lobbyPlayer.username;
                 }
-                const playerInGame = this.gameManager.getPlayer(socket.id);
-                if (playerInGame) playerInGame.lobbyId = lobbyId;
+                if (existingGamePlayer) existingGamePlayer.lobbyId = lobbyId;
 
                 // Enviarle los jugadores existentes
                 socket.emit("currentPlayers", this.gameManager.getState());
@@ -154,30 +195,33 @@ socket.on("playerReady", () => {
     const lobby = this.lobbyManager.getLobby(lobbyId);
     const lobbyPlayer = lobby?.players.find(p => p.id === socket.id);
     let gamePlayer = this.gameManager.getPlayer(socket.id);
+    const shipType = lobbyPlayer?.shipType || "pirate";
     if (!gamePlayer && lobbyPlayer) {
       gamePlayer = this.gameManager.addPlayer({
         id: socket.id,
         username: lobbyPlayer.username,
         team: lobbyPlayer.team,
-        shipType: lobbyPlayer.shipType,
+        shipType: shipType,
         position: { x: 0, y: 0, z: 0 },
         rotation: { y: 0 },
       });
     } else if (gamePlayer && lobbyPlayer) {
       gamePlayer.team = lobbyPlayer.team;
-      gamePlayer.shipType = lobbyPlayer.shipType;
+      gamePlayer.setShipType(shipType);
+      gamePlayer.resetHealth();
       gamePlayer.username = lobbyPlayer.username;
       gamePlayer.lobbyId = lobbyId;
     }
     const others = this.gameManager.getState().filter(p => p.id !== socket.id);
     socket.emit("currentPlayers", others);
     socket.to(lobbyId).emit("playerJoined", { id: socket.id });
+    this.gameManager.startLobbyMatch(lobbyId);
     this.broadcastScoreboard(lobbyId);
   }
 });
 
 // Actualizar info del jugador en el lobby (username, team, shipType)
-socket.on("updatePlayerInfo", (data: { username: string; team: string; shipType: string }) => {
+socket.on("updatePlayerInfo", (data: { username: string; team: string; shipType: string; userId?: string }) => {
   const lobbyId = [...socket.rooms].find(r => r !== socket.id);
   if (lobbyId) {
     const lobby = this.lobbyManager.updatePlayerInfo(
@@ -197,16 +241,21 @@ socket.on("updatePlayerInfo", (data: { username: string; team: string; shipType:
   if (!player) {
     player = this.gameManager.addPlayer({
       id: socket.id,
+      userId: data.userId,
       username: data.username,
       team: data.team as any,
-      shipType: data.shipType as any,
+      shipType: (data.shipType as any) || "pirate",
       position: { x: 0, y: 0, z: 0 },
       rotation: { y: 0 },
     });
   } else {
+    if (data.userId) player.userId = data.userId;
     if (data.username) player.username = data.username;
     if (data.team) player.team = data.team as any;
-    if (data.shipType) player.shipType = data.shipType as any;
+    if (data.shipType) {
+      player.setShipType(data.shipType as any);
+      player.resetHealth();
+    }
   }
   if (player && lobbyId) {
     player.lobbyId = lobbyId;
@@ -223,7 +272,7 @@ socket.on("playerMove", (data:any) => {
       id: socket.id,
       username: data.username,
       team: data.team,
-      shipType: data.shipType,
+      shipType: data.shipType || "pirate",
       position: data.position,
       rotation: data.rotation,
       health: data.health
@@ -234,7 +283,10 @@ socket.on("playerMove", (data:any) => {
   } else {
     if (data.username) player.username = data.username;
     if (data.team) player.team = data.team;
-    if (data.shipType) player.shipType = data.shipType;
+    if (data.shipType && player.shipType !== data.shipType) {
+      player.setShipType(data.shipType);
+      player.resetHealth();
+    }
   }
 
   // siempre asegurar que está en la room y tiene lobbyId
