@@ -2,6 +2,7 @@ import { Server } from "socket.io";
 import { GameManager } from "../game-manager/GameManager.js";
 import { LobbyManager } from "../lobby-manager/LobbyManager.js";
 import { SHIPS } from "../interfaces/player.js";
+import { ChatMessage, KillEvent } from "../interfaces/chat.js";
 
 
 export class SocketManager {
@@ -21,17 +22,23 @@ export class SocketManager {
         this.io.to(lobbyId).emit("scoreboardUpdated", scoreboard);
     }
 
-    emitHits(hits: { id: string; damage: number; health: number, projectileId: string }[]) {
+    emitHits(hits: { id: string; damage: number; health: number; projectileId: string; kill?: KillEvent }[]) {
         if (hits.length === 0) return;
         const affectedLobbies = new Set<string>();
         for (const hit of hits) {
             const player = this.gameManager.getPlayer(hit.id);
-            const targetLobby = player?.lobbyId;
+            const targetLobby = player?.lobbyId || (hit.kill as any)?.lobbyId;
             if (targetLobby) {
                 this.io.to(targetLobby).emit("playerDamaged", hit);
+                if (hit.kill) {
+                    this.io.to(targetLobby).emit("playerKilled", hit.kill);
+                }
                 affectedLobbies.add(targetLobby);
             } else {
                 this.io.emit("playerDamaged", hit);
+                if (hit.kill) {
+                    this.io.emit("playerKilled", hit.kill);
+                }
             }
         }
         for (const lobbyId of affectedLobbies) {
@@ -292,6 +299,39 @@ socket.on("playerShoot", (data: {
                        projectileId: data.projectileId
                    });
              });
+
+            // Chat de texto en el lobby o partida
+            socket.on("sendChatMessage", (data: { message: string; channel?: "all" | "team" }) => {
+                const lobbyId = [...socket.rooms].find(r => r !== socket.id);
+                if (!lobbyId || !data.message?.trim()) return;
+
+                const player = this.gameManager.getPlayer(socket.id);
+                const lobby = this.lobbyManager.getLobby(lobbyId);
+                const lobbyPlayer = lobby?.players.find(p => p.id === socket.id);
+
+                const username = player?.username || lobbyPlayer?.username || "Marinero";
+                const team = player?.team || lobbyPlayer?.team || "blue";
+
+                const chatPayload: ChatMessage = {
+                    id: crypto.randomUUID(),
+                    senderId: socket.id,
+                    senderName: username,
+                    senderTeam: team,
+                    message: data.message.trim().slice(0, 150),
+                    channel: data.channel || "all",
+                    timestamp: Date.now(),
+                };
+
+                if (data.channel === "team") {
+                    const teamPlayers = (lobby?.players || []).filter(p => p.team === team);
+                    for (const p of teamPlayers) {
+                        this.io.to(p.id).emit("chatMessage", chatPayload);
+                    }
+                } else {
+                    this.io.to(lobbyId).emit("chatMessage", chatPayload);
+                }
+            });
+
             // jugador se desconecta
             socket.on("disconnect", () => {
                 const lobbyId = [...socket.rooms].find(r => r !== socket.id);

@@ -22,8 +22,8 @@ export class ProjectileManager {
     this.projectiles.push(new ServerProjectile(position, direction, ownerId, damage,projectileId,lobbyId,ownerTeam));
   }
 
-  update(delta: number): { id: string; damage: number; health: number, projectileId: string, }[] {
-    const hits: { id: string; damage: number; health: number,projectileId:string }[] = [];
+  update(delta: number): { id: string; damage: number; health: number; projectileId: string; kill?: any }[] {
+    const hits: { id: string; damage: number; health: number; projectileId: string; kill?: any }[] = [];
 
     for (const projectile of this.projectiles) {
       projectile.update(delta);
@@ -36,7 +36,7 @@ export class ProjectileManager {
     return hits; // ← devuelve los impactos para que GameManager los emita
   }
 
-private checkCollisions(hits: { id: string; damage: number; health: number,projectileId:string }[]) {
+private checkCollisions(hits: { id: string; damage: number; health: number; projectileId: string; kill?: any }[]) {
     const players = this.gameManager.getState();
     for (const projectile of this.projectiles) {
       if (projectile.age > projectile.lifetime || projectile.isDead) continue;
@@ -79,22 +79,48 @@ private checkCollisions(hits: { id: string; damage: number; health: number,proje
           projectile.isDead = true;
           projectile.age = projectile.lifetime + 5;
 
+          let killInfo: any = null;
           const attacker = this.gameManager.getPlayer(projectile.ownerId);
           if (attacker) {
             attacker.damageDealt += projectile.damage;
             if (wasAlive && !player.isAlive) {
               attacker.kills++;
               player.deaths++;
+              killInfo = {
+                id: crypto.randomUUID(),
+                killerId: attacker.id,
+                killerName: attacker.username,
+                killerTeam: attacker.team,
+                victimId: player.id,
+                victimName: player.username,
+                victimTeam: player.team,
+                weapon: "Cañón",
+                timestamp: Date.now(),
+                lobbyId: player.lobbyId || projectile.lobbyId
+              };
             }
           } else if (wasAlive && !player.isAlive) {
             player.deaths++;
+            killInfo = {
+              id: crypto.randomUUID(),
+              killerId: null,
+              killerName: "Mar Caribe",
+              killerTeam: "neutral",
+              victimId: player.id,
+              victimName: player.username,
+              victimTeam: player.team,
+              weapon: "Cañón",
+              timestamp: Date.now(),
+              lobbyId: player.lobbyId || projectile.lobbyId
+            };
           }
 
           hits.push({ 
             id: player.id, 
             damage: projectile.damage, 
             health: player.health,
-            projectileId: projectile.id  
+            projectileId: projectile.id,
+            kill: killInfo
           });
         }
       }
