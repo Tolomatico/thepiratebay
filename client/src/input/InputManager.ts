@@ -6,10 +6,19 @@ export class InputManager {
 
     
     private onKeyDown = (event: KeyboardEvent) => {
+        const target = event.target as HTMLElement;
+        if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
+            return;
+        }
         this.isKeyPressed(event.code);
     };
 
     private onKeyUp = (event: KeyboardEvent) => {
+        const target = event.target as HTMLElement;
+        if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
+            this.keysPressed = [];
+            return;
+        }
         this.isKeyReleased(event.code);
     };
 

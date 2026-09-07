@@ -62,6 +62,11 @@ export function Game({ onLeaveGame }: GameProps) {
   // Manejo de teclas: ESC para Menú y TAB para Marcador de Escuadras
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) {
+        return;
+      }
+
       if (event.key === "Escape") {
         togglePauseMenu();
       } else if (event.key === "Tab" || event.code === "Tab") {
@@ -71,6 +76,11 @@ export function Game({ onLeaveGame }: GameProps) {
     };
 
     const handleKeyUp = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) {
+        return;
+      }
+
       if (event.key === "Tab" || event.code === "Tab") {
         event.preventDefault();
         setIsScoreboardOpen(false);

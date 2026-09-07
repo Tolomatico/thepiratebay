@@ -1,5 +1,6 @@
-import { CompassBar, EnemyBar, RespawnOverlay, PlayerHealthBar, EnemyCounter } from "../components";
+import { CompassBar, EnemyBar, RespawnOverlay, PlayerHealthBar, EnemyCounter, Killfeed } from "../components";
 import { useGameHud } from "../context/HudContext";
+import { useNetwork } from "../context/NetworkContext";
 import ChatComponent from "../components/chat/ChatComponent";
 
 interface HudOverlayProps {
@@ -9,11 +10,17 @@ interface HudOverlayProps {
 
 export function HudOverlay({ onOpenMenu, onToggleScoreboard }: HudOverlayProps) {
   const { playerHealth, playerMaxHealth, playerRotation, playerPosition, respawnCountdown, enemyCount, enemyHealthBars, healthBarRefs, remotePlayers} = useGameHud();
+  const network = useNetwork();
   return (
     <div className="fixed inset-0 pointer-events-none z-50 font-sans">
       {/* Top Left: Chat */}
       <div className="absolute top-4 left-4 pointer-events-auto">
         <ChatComponent />
+      </div>
+
+      {/* Top Right: Killfeed flotante */}
+      <div className="absolute top-44 right-6 pointer-events-none z-40">
+        <Killfeed currentSocketId={network.socket?.id} />
       </div>
 
       {/* Enemy Health Bars (In-World) */}

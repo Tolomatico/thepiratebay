@@ -1,5 +1,6 @@
 import { io, Socket } from "socket.io-client";
 import type { PlayerData, ScoreboardPlayer } from "../interfaces/player";
+import type { ChatMessage, KillEvent } from "../interfaces/chat";
 
 
 
@@ -155,5 +156,33 @@ export class NetworkManager {
 
   onScoreboardUpdated(callback: (players: ScoreboardPlayer[]) => void) {
     this.socket.on("scoreboardUpdated", callback);
+  }
+
+  sendChatMessage(message: string, channel: "all" | "team" = "all") {
+    this.socket.emit("sendChatMessage", { message, channel });
+  }
+
+  onChatMessage(callback: (message: ChatMessage) => void) {
+    this.socket.on("chatMessage", callback);
+  }
+
+  offChatMessage(callback?: (message: ChatMessage) => void) {
+    if (callback) {
+      this.socket.off("chatMessage", callback);
+    } else {
+      this.socket.off("chatMessage");
+    }
+  }
+
+  onPlayerKilled(callback: (kill: KillEvent) => void) {
+    this.socket.on("playerKilled", callback);
+  }
+
+  offPlayerKilled(callback?: (kill: KillEvent) => void) {
+    if (callback) {
+      this.socket.off("playerKilled", callback);
+    } else {
+      this.socket.off("playerKilled");
+    }
   }
 }

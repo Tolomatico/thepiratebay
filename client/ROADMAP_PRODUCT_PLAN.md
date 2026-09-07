@@ -1,198 +1,188 @@
-# Roadmap de Producto & Arquitectura: The Pirate Bay
+# 🗺️ Roadmap de Producto & Arquitectura: The Pirate Bay
 
-Este documento detalla el plan estratégico, técnico y de experiencia de usuario (UX) para transformar **The Pirate Bay** en una plataforma completa con cuentas de usuario, persistencia, astillero interactivo 3D, salas avanzadas y estadísticas de combate.
+Este documento detalla el estado actual del desarrollo, las características completadas y la hoja de ruta técnica y de producto para **The Pirate Bay**.
 
 ---
 
-## 1. Embudo de Experiencia de Usuario (User Journey)
+## 📊 Estado Actual del Proyecto (Changelog de Features)
 
-El principio de diseño es **cero fricción para jugar al instante, pero con incentivos claros para registrarse y progresar**.
+### ✅ 1. Persistencia y Base de Datos (Completado)
+- [x] **Base de Datos PostgreSQL (Neon Serverless)**: Conexión SSL robusta configurada y testeada.
+- [x] **Esquema de Tablas (`schema.sql`)**:
+  - `users`: Registro permanente e invitados, email, contraseña con hash bcrypt, avatar, oro acumulado, nivel y XP.
+  - `user_stats`: Registro histórico acumulativo de kills, deaths, daño total, partidas jugadas y ganadas.
+  - `match_history`: Historial de partidas, ganadores, duración y desglose JSON de estadísticas.
+- [x] **Servicio de Autenticación (`AuthService.ts` / `UserRepository.ts`)**:
+  - Generación y verificación de tokens JWT seguros.
+  - Registro de usuarios con validación de credenciales.
+  - Inicio de sesión con email o username.
+  - Modo Invitado instantáneo persistido en base de datos.
+  - Inicio de sesión y registro con Google OAuth (Google Identity Services con verificación de ID Token oficial).
+  - Endpoints REST `/api/auth/*` integrados con Express.
+
+### ✅ 2. Experiencia de Entrada y Menú (Completado)
+- [x] **Tabs de Acceso Modular**:
+  - **Invitado**: Nombre personalizable o generador de apodos piratas aleatorios (`🎲 Aleatorio`) con entrada en 1 clic sin fricción.
+  - **Iniciar Sesión**: Formulario de credenciales con estética naval oscura + botón oficial de Google.
+  - **Registrarse**: Creación de cuenta con confirmación de contraseña + botón de Google.
+- [x] **Persistencia de Sesión Local**: Guardado de JWT en `localStorage`, decodificación de datos y sesión persistente al recargar la página.
+- [x] **Barra de Estado del Capitán**: Indicador de rango ("Invitado" / "Capitán"), balance de oro y botón de cambio de capitán.
+
+### ✅ 3. Enrutamiento, Navegación y Control de Flujo (Completado)
+- [x] **Soporte Completo de Historial de Navegador (`popstate` / Hashes)**:
+  - Navegación clara con URLs amigables: `#menu`, `#lobbies`, `#lobby/:id`, `#battle`.
+  - El botón "Atrás" y "Adelante" del navegador ya no expulsan al usuario de la aplicación.
+  - Salida ordenada de lobbies notificando al servidor de forma limpia al retroceder.
+- [x] **Menú de Pausa In-Game (`ESC` / ⚙️)**:
+  - Componente modal `GamePauseMenu.tsx` integrado en la vista de batalla.
+  - Modal con confirmación para "Abandonar Batalla" y volver ordenadamente a la lista de salas.
+  - Guía rápida de controles integrada dentro del menú de pausa.
+
+### ✅ 4. Sistema de Lobbies y Matchmaking (Completado)
+- [x] **Creación y Explorador de Salas**:
+  - Configuración de nombre de sala y límite de jugadores (2 a 8).
+  - Lista de salas en vivo con actualización reactiva vía WebSockets (`lobbiesUpdated`).
+- [x] **Sala de Espera (Pre-Battle Lobby)**:
+  - Selección de barco (*El Temido Pirata* vs *Man-o-War Inglés* / Fragata) con ficha comparativa de atributos.
+  - Selección de escuadra (*Imperio Rojo* vs *Armada Azul*).
+  - **Corrección de sincronización**: Idempotencia al unirse (`onJoin`), eliminando duplicados o jugadores fantasma (`"Jugador"`).
+  - Botón de salida de sala con desvinculación automática en el servidor.
+
+### ✅ 5. Combate 3D y Marcador en Vivo (Completado)
+- [x] **Marcador Desplegable con Tecla `TAB` (`ScoreboardModal.tsx`)**:
+  - División visual en dos escuadras: **Armada Azul** vs **Imperio Rojo**.
+  - Estadísticas individuales en tiempo real: Capitán, Navío, Bajas (Kills), Hundimientos (Deaths), Daño Infligido y Estado (*A flote* / *Hundido*).
+  - Distintivo visual dorado `[TÚ]` para identificar al jugador local sin confusiones.
+  - Conteo global de bajas de la escuadra en el encabezado.
+  - Integrado vía socket `scoreboardUpdated` sincronizado en cada impacto y hundimiento.
+
+---
+
+## 🎯 Próximas Funcionalidades (Roadmap Priorizado)
 
 ```mermaid
 flowchart TD
-    A[Landing / Portada Cinemática 3D] --> B{Acción del Jugador}
-    B -->|Jugar ya| C[Modo Invitado / Guest]
-    B -->|Crear Cuenta| D[Registro: Email + Contraseña]
-    B -->|Ya tengo cuenta| E[Iniciar Sesión]
-    
-    C --> F[Hub Principal / Taberna Pirata]
-    D --> F
-    E --> F
-    
-    F --> G[Astillero / Selector 3D de Navíos]
-    F --> H[Navegador de Salas / Matchmaking]
-    F --> I[Bitácora / Estadísticas & Logros]
-    
-    H --> J[Lobby Pre-Partida & Scoreboard]
-    J --> K[¡A la Batalla! - Combate 3D]
-    K --> L[Pantalla Post-Partida: Resumen, Kills & Oro]
-    L --> F
+    subgraph Fase 1: Ciclo de Partida y Persistencia
+        A[Fin de Partida: Victoria / Derrota] --> B[Guardado en DB: Kills, Oro y XP]
+        B --> C[Pantalla de Resultados Post-Match]
+        A --> D[Killfeed en Combate: Avisos en Vivo]
+    end
+
+    subgraph Fase 2: Social & Calidad de Vida
+        E[Chat de Texto en Lobby y Batalla]
+        F[Astillero 3D: Vista previa interactiva de barcos]
+        G[Balanceo Automático de Equipos]
+    end
+
+    subgraph Fase 3: Progresión y Economía
+        H[Tienda del Astillero: Nuevos Navíos con Oro]
+        I[Sistema de Niveles, Rangos y Títulos Piratas]
+        J[Bitácora de Logros Desbloqueables]
+    end
+
+    subgraph Fase 4: Modo Cazarrecompensas
+        K[Tablón de Se Busca: Contratos de Sangre]
+        L[Infiltración en Sala de la Presa]
+        M[Alarma Sonora y Recompensa Doble]
+    end
+
+    Fase 1 --> Fase 2
+    Fase 2 --> Fase 3
+    Fase 3 --> Fase 4
 ```
 
 ---
 
-## 2. Definición de Pantallas y Funcionalidades
+## 🚀 Fase 1: Ciclo de Partida Completo & Cierre Post-Match (Inmediata)
 
-### A. Pantalla de Bienvenida (Landing / Splash)
-- **Fondo Interactivo 3D**: Renderizado en vivo con Three.js mostrando el océano, el sol en el horizonte y un navío fondeado con bandera pirata animada.
-- **Botones de Entrada**:
-  - `JUGAR COMO INVITADO`: Genera un alias pirata automático (ej. `Capitán_Jack_482`), almacena una sesión en `localStorage` y permite entrar a la partida en un solo clic.
-  - `INICIAR SESIÓN` / `REGISTRARSE`: Modal flotante con estética náutica para guardar progreso permanente.
-  - Banner informativo: *"Crea tu cuenta para guardar tu oro, kills y desbloquear navíos legendarios"*.
-  - Posibilidad de convertir una cuenta de invitado en cuenta registrada sin perder las partidas de esa sesión.
+### 1.1 Pantalla de Fin de Partida (Post-Match Summary)
+- **Condición de Victoria**:
+  - Límite de bajas alcanzado (ej. 10 bajas por equipo) o límite de tiempo (ej. 8 minutos).
+- **Flujo**:
+  1. El servidor detecta la condición y emite el evento `matchEnded` con el equipo ganador y los resultados finales.
+  2. El cliente congela los controles y despliega la pantalla cinemática de fin de combate:
+     - Cartel épico: **¡VICTORIA PIRATA!** o **¡DERROTA NAVAL!**.
+     - Cuadro de honor: **MVP de la partida** (más bajas o más daño).
+     - Resumen de recompensas ganadas:
+       - `+150 Oro` por participar (+ bonus si ganó el equipo).
+       - `+300 XP` de experiencia.
+     - Botón "Volver a la Lista de Salas" o "Revancha".
 
-### B. Hub Principal (Menú de la Taberna)
-- **Barra Superior (Header)**:
-  - Avatar personalizable, Nombre de Capitán, Nivel y barra de progreso de experiencia (XP).
-  - Contador de Monedas de Oro.
-  - Acceso directo a Perfil y Ajustes.
-- **Acceso a Juego**:
-  - `PARTIDA RÁPIDA`: Entra automáticamente a la sala pública con más jugadores activos.
-  - `LISTA DE SALAS`: Abre el explorador de lobbies.
-  - `CREAR SALA`: Permite configurar nombre de sala, modo de juego (Deathmatch o Por Equipos) y límite de jugadores.
+### 1.2 Persistencia de Resultados en PostgreSQL
+- Al dispararse `matchEnded`, el servidor guarda automáticamente:
+  - Registro en `match_history` con `scores_json` completo.
+  - `UPDATE user_stats`: suma de `total_kills`, `total_deaths`, `damage_dealt`, `matches_played` y `matches_won`.
+  - `UPDATE users`: acreditación del oro y XP ganados al usuario registrado o invitado.
 
-### C. El "Astillero" (Ship Selection & Drydock 3D)
-- **Inspección 3D**:
-  - El navío flota sobre un dique seco o aguas tranquilas; el jugador puede rotarlo 360°, hacer zoom e inspeccionar sus detalles.
-- **Ficha Técnica Comparativa**:
-  - Barras numéricas y gráficas de atributos:
-    - Velocidad máxima y Maniobrabilidad / Radio de giro.
-    - Puntos de blindaje y resistencia del casco.
-    - Potencia de fuego (Cañón frontal vs Baterías laterales).
-- **Personalización Cosmética (Futuro)**:
-  - Diseños de velas (Velas negras, rojas, con calaveras).
-  - Títulos de barco (ej. *"El Holandés Errante"*).
-
-### D. Explorador de Lobbies & Sala de Espera Pre-Partida
-- **Lista de Salas Públicas**:
-  - Nombre de la sala, Anfitrión, Modo (FFA / Red vs Blue), Jugadores actuales (ej. `5/8`), Ping estimado.
-- **Sala de Espera (Lobby Screen)**:
-  - Tabla informativa de tripulantes:
-    | Jugador | Nivel | Navío | Bando | Kills Históricas | K/D Ratio | Estado |
-    | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-    | ⚓ **Barbanegra** | Lvl 12 | Fragata | 🔴 Red | 148 | 2.4 | Listo |
-    | ⛵ **Tolo** | Lvl 8 | Pirata | 🔵 Blue | 89 | 1.8 | Listo |
-  - Selector de equipo dinámico con balanceo automático de jugadores.
-  - Chat de texto integrado en el lobby.
-  - Botón "Listo" para cada participante y botón de inicio para el anfitrión.
-
-### E. HUD en Combate y Scoreboard en Vivo
-- **Scoreboard desplegable con `TAB`**:
-  - Muestra la tabla de clasificación en tiempo real de la partida:
-    - Jugador, Navío, Bajas (Kills), Muertes (Deaths), Daño Total, Latencia (Ping).
-  - Marcador general de bando en la parte superior: `🔴 RED: 14 — 🔵 BLUE: 11`.
-- **Killfeed (Notificaciones de Bajas)**:
-  - Aparece en la esquina superior derecha:
-    `Capitán_Tolo [Cañón Frontal] 💥 Corsario_99`
-
-### F. Pantalla de Fin de Partida (Victory / Defeat Summary)
-- Al concluir el límite de tiempo o alcanzar las bajas objetivo:
-  - Cámara cinemática orbital alrededor del navío MVP.
-  - Cuadro de honor: Jugador con más bajas y jugador con más daño infligido.
-  - Desglose de recompensas ganadas:
-    - `+200 XP` (Progreso de nivel).
-    - `+120 Oro` (Para compras en astillero).
-  - Botón para volver al Hub o jugar revancha en la misma sala.
+### 1.3 Killfeed en Combate (Notificaciones de Bajas)
+- Avisos animados flotantes en la esquina superior derecha del HUD durante la partida:
+  > `💥 Capitán_Morgan [Cañón Frontal] ➔ Barbanegra`
+- Desaparición suave con fade-out tras 4 segundos.
 
 ---
 
-## 3. Arquitectura Técnica y Base de Datos
+## ⚓ Fase 2: Social, Astillero 3D & Mejoras de Combate
 
-```mermaid
-graph LR
-    subgraph Cliente (React + Three.js)
-        UI[React UI / Tailwind / HUD]
-        Game[Motor Three.js]
-    end
+### 2.1 Chat de Texto Integrado
+- **Chat de Lobby**: Conversación previa entre capitanes antes de iniciar la batalla.
+- **Chat In-Game**: Tecla `ENTER` para abrir caja de texto con filtro de chat global o de equipo (*All* / *Team*).
 
-    subgraph Servidor (Node.js)
-        API[API REST / Auth: JWT + Bcrypt]
-        Sockets[Socket.io Game Loop 60fps]
-    end
+### 2.2 Astillero 3D Interactivo (3D Ship Preview)
+- Reemplazar las imágenes fijas en la selección de nave por un visor interactivo Three.js:
+  - El navío seleccionado flota sobre un dique o aguas calmas en el menú.
+  - Posibilidad de rotar 360° con el ratón e inspeccionar cañones y detalles del casco.
 
-    subgraph Persistencia
-        DB[(PostgreSQL / SQLite / Supabase)]
-    end
-
-    UI -->|Login, Registro, Perfil| API
-    API --> DB
-    UI -->|Conexión a Partida con JWT| Sockets
-    Sockets -->|Al finalizar partida: guarda Kills y Oro| DB
-```
-
-### Esquema de Base de Datos Recomendado
-
-#### Tabla `users`
-| Campo | Tipo | Descripción |
-| :--- | :--- | :--- |
-| `id` | UUID (PK) | Identificador único |
-| `username` | VARCHAR(32) | Nombre de usuario (Único) |
-| `email` | VARCHAR(128) | Correo electrónico (Opcional en invitados) |
-| `password_hash` | VARCHAR(255) | Hash Bcrypt (Null en invitados) |
-| `is_guest` | BOOLEAN | Indica si la cuenta es temporal |
-| `gold` | INTEGER | Oro acumulado |
-| `level` | INTEGER | Nivel pirata |
-| `xp` | INTEGER | Puntos de experiencia acumulados |
-| `created_at` | TIMESTAMP | Fecha de registro |
-
-#### Tabla `user_stats`
-| Campo | Tipo | Descripción |
-| :--- | :--- | :--- |
-| `user_id` | UUID (FK) | Relación con `users` |
-| `total_kills` | INTEGER | Total histórico de barcos hundidos |
-| `total_deaths` | INTEGER | Total histórico de veces hundido |
-| `matches_played` | INTEGER | Partidas jugadas |
-| `matches_won` | INTEGER | Victorias conseguidas |
-| `damage_dealt` | BIGINT | Daño total infligido |
-
-#### Tabla `match_history`
-| Campo | Tipo | Descripción |
-| :--- | :--- | :--- |
-| `id` | UUID (PK) | Identificador de partida |
-| `lobby_name` | VARCHAR(64) | Nombre de la sala |
-| `winner_team` | VARCHAR(16) | Equipo ganador ("red" / "blue" / "ffa") |
-| `duration_sec` | INTEGER | Duración del combate |
-| `scores_json` | JSONB | Resumen de kills, muertes y daño por jugador |
-| `played_at` | TIMESTAMP | Fecha y hora de la partida |
-
-#### Tabla `achievements` (Logros)
-- *"Tirador Certero"*: Acertar 50 disparos a larga distancia.
-- *"Terror del Caribe"*: Hundir 5 barcos en una sola partida.
-- *"Bautismo de Fuego"*: Hundir tu primer navío.
-- *"Superviviente"*: Salir victorioso con menos del 10% de vida.
-
-### G. Sistema de Cazarrecompensas: Contratos de Sangre (Bounty Hunting)
-Una de las mecánicas dinámicas más inmersivas para incentivar el PvP cruzado entre salas:
-
-- **El Tablón de Se Busca (Bounty Board)**:
-  - En la Taberna/Hub aparece una lista de capitanes actualmente conectados en combate que tienen contratos sobre sus cabezas (jugadores con rachas de kills, alto nivel o seleccionados por el sistema).
-  - El contrato detalla: Nombre del Capitán objetivo, Navío que comanda, Sala donde está combatiendo y Recompensa en Oro (ej. `🪙 350 Oro`).
-- **Infiltración en la Partida**:
-  - Al presionar *"Aceptar Contrato"*, el jugador se conecta directamente como rival a la sala de su presa.
-- **Tensión & Alarma Temprana para la Presa**:
-  - En el HUD de la víctima suena una campana náutica de emergencia con un aviso visual parpadeante:
-    > `⚠️ ¡PRESA MARCADA! El Cazador [Nombre] ha tomado un contrato por tu cabeza y acaba de entrar a tus aguas.`
-  - Ambos navíos reciben marcas visuales sutiles de combate (ícono de calavera carmesí o mira sobre el mástil y en el minimapa).
-- **Resolución & Recompensa Cruzada**:
-  - **Si el Cazador lo hunde**: Cobra el botín del contrato íntegro + bonificación de experiencia (XP).
-  - **Si la Presa hunde a su Cazador ("Cazador Cazado")**: La presa se queda con la recompensa del contrato por defender su honor.
+### 2.3 Balanceo y Preparación de Equipos
+- Indicador de estado "Listo" (`Ready`) por jugador en la sala de espera.
+- Bloqueo de inicio si un equipo tiene una desventaja severa de jugadores.
 
 ---
 
-## 4. Fases de Implementación Sugeridas
+## 🪙 Fase 3: Economía Pirata, Desbloqueos & Logros
 
-1. **Fase A: Autenticación Híbrida (Invitado + Cuentas + Google)**
-   - UI implementada en React (modo Invitado con nombres aleatorios + tabs de Login/Registro).
-   - Endpoints `/api/auth/guest`, `/api/auth/google`, `/api/auth/register`, `/api/auth/login`.
-   - Generación de token JWT común para Socket.io y almacenamiento en cliente.
-2. **Fase B: Hub Principal & Astillero 3D**
-   - Nueva interfaz de navegación con inspección rotatoria de barcos en Three.js.
-3. **Fase C: Scoreboard & Persistencia de Partidas**
-   - Envío de reporte de fin de partida desde Socket.io hacia la base de datos.
-   - Pantalla de Scoreboard con tecla `TAB` en combate y killfeed en tiempo real.
-4. **Fase D: Logros, Niveles & Economía**
-   - Sistema de XP y desbloqueo de barcos con monedas de oro acumuladas.
-5. **Fase E: Contratos de Cazarrecompensas (Bounty Hunting)**
-   - Algoritmo de detección de capitanes objetivo activos en salas.
-   - Sistema de alertas sonoras/HUD y recompensas de contrato al cazar o sobrevivir.
+### 3.1 Tienda del Astillero & Personalización
+- Catálogo de navíos desbloqueables con el oro ganado en combate:
+  - *Balandra Veloz* (alta velocidad, baja vida).
+  - *Galeón de Guerra* (blindaje pesado, 6 cañones por banda).
+- Diseños cosméticos de banderas y velas.
 
+### 3.2 Sistema de Rangos y Niveles
+- Niveles piratas calculados por XP:
+  - Nivel 1: *Grumete*
+  - Nivel 5: *Marinero de Primera*
+  - Nivel 10: *Contramaestre*
+  - Nivel 20: *Capitán Temido*
+  - Nivel 50: *Señor de los Mares*
+
+### 3.3 Logros (Achievements)
+- *Tirador Certero*: 50 disparos acertados a larga distancia.
+- *Terror del Caribe*: 5 bajas en una sola partida.
+- *Superviviente*: Ganar una batalla con menos del 15% de vida.
+
+---
+
+## ☠️ Fase 4: Modo Cazarrecompensas (Bounty Hunting)
+
+- **Tablón de Se Busca (Bounty Board)** en el menú principal:
+  - Lista capitanes con rachas activas en otras salas con una recompensa en oro sobre su cabeza.
+- **Infiltración**:
+  - Al aceptar el contrato, el cazador entra directamente al equipo rival de la presa.
+- **Alarma Temprana en el HUD**:
+  - Suena campana de abordaje en el barco de la presa:
+    > `⚠️ ¡PRESA MARCADA! Un cazador ha entrado a tus aguas tras tu recompensa.`
+- **Doble Recompensa**:
+  - Si el cazador lo hunde, cobra el contrato.
+  - Si la presa hunde a su cazador (*"Cazador Cazado"*), se queda con el botín.
+
+---
+
+## 🛠️ Resumen de Stack Tecnológico Actual
+
+| Componente | Tecnología | Rol |
+| :--- | :--- | :--- |
+| **Motor 3D** | Three.js + GLTF | Renderizado del océano, navíos, cañones y proyectiles |
+| **Frontend UI** | React 18 + Tailwind CSS | Menús, lobbies, HUD, scoreboard y autenticación |
+| **Backend** | Node.js + Express + TypeScript | API REST y servicios |
+| **Multiplayer Loop** | Socket.io | Sincronización a 60 FPS de posiciones, disparos y daño |
+| **Base de Datos** | PostgreSQL (Neon Serverless) | Usuarios, estadísticas, historial de partidas |
+| **Seguridad / Auth** | JWT + Bcrypt + Google OAuth | Autenticación híbrida persistente |
