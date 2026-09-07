@@ -24,7 +24,7 @@ export class Lobby{
     this.name = name;
     this.lobbyName = lobbyName;
     this.maxPlayers = maxPlayers;
-    this.players.push({ id: hostId, username: "Host", team: "red", shipType: "pirate" });
+    this.players.push({ id: hostId, username: name || "Host", team: "red", shipType: "pirate" });
   }
 
   updatePlayerInfo(playerId: string, username: string, team: Team, shipType: ShipType) {

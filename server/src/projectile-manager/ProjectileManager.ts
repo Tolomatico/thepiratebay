@@ -74,9 +74,22 @@ private checkCollisions(hits: { id: string; damage: number; health: number,proje
           projectile.age = projectile.lifetime + 5;
           continue
         }
+          const wasAlive = player.isAlive;
           player.takeDamage(projectile.damage);
           projectile.isDead = true;
           projectile.age = projectile.lifetime + 5;
+
+          const attacker = this.gameManager.getPlayer(projectile.ownerId);
+          if (attacker) {
+            attacker.damageDealt += projectile.damage;
+            if (wasAlive && !player.isAlive) {
+              attacker.kills++;
+              player.deaths++;
+            }
+          } else if (wasAlive && !player.isAlive) {
+            player.deaths++;
+          }
+
           hits.push({ 
             id: player.id, 
             damage: projectile.damage, 

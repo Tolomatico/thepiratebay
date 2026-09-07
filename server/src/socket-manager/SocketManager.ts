@@ -15,16 +15,27 @@ export class SocketManager {
         this.setupEvents()
     }
 
-emitHits(hits: { id: string; damage: number; health: number, projectileId: string }[]) {
+    broadcastScoreboard(lobbyId: string) {
+        if (!lobbyId) return;
+        const scoreboard = this.gameManager.getLobbyScoreboard(lobbyId);
+        this.io.to(lobbyId).emit("scoreboardUpdated", scoreboard);
+    }
+
+    emitHits(hits: { id: string; damage: number; health: number, projectileId: string }[]) {
         if (hits.length === 0) return;
+        const affectedLobbies = new Set<string>();
         for (const hit of hits) {
             const player = this.gameManager.getPlayer(hit.id);
             const targetLobby = player?.lobbyId;
             if (targetLobby) {
                 this.io.to(targetLobby).emit("playerDamaged", hit);
+                affectedLobbies.add(targetLobby);
             } else {
                 this.io.emit("playerDamaged", hit);
             }
+        }
+        for (const lobbyId of affectedLobbies) {
+            this.broadcastScoreboard(lobbyId);
         }
     }
 
@@ -47,12 +58,30 @@ emitHits(hits: { id: string; damage: number; health: number, projectileId: strin
                   socket.join(lobby.id)
                   socket.emit("lobbyCreated",lobby)
                   this.io.emit("lobbiesUpdated",this.lobbyManager.getLobbies())
+
+                  const existingGamePlayer = this.gameManager.getPlayer(socket.id);
+                  if (!existingGamePlayer) {
+                      this.gameManager.addPlayer({
+                          id: socket.id,
+                          username: name || "Host",
+                          team: "red",
+                          shipType: "pirate",
+                          position: { x: 0, y: 0, z: 0 },
+                          rotation: { y: 0 },
+                      });
+                  } else {
+                      existingGamePlayer.username = name || "Host";
+                      existingGamePlayer.team = "red";
+                  }
+                  const playerInGame = this.gameManager.getPlayer(socket.id);
+                  if (playerInGame) playerInGame.lobbyId = lobby.id;
            })
 
 // Cliente se une al lobby
-             socket.on("joinLobby",(data:{ lobbyId:string })=>{
-                 const { lobbyId }=data
-                 const lobby=this.lobbyManager.onJoin(socket.id,lobbyId)
+             socket.on("joinLobby",(data:{ lobbyId:string, username?: string })=>{
+                 const { lobbyId, username } = data;
+                 const isAlreadyInLobby = this.lobbyManager.getLobby(lobbyId)?.players.some(p => p.id === socket.id);
+                 const lobby = this.lobbyManager.onJoin(socket.id, lobbyId, username);
                 if (!lobby) {
                      socket.emit("lobbyError", "Lobby lleno o no existe");
                      return;
@@ -60,34 +89,83 @@ emitHits(hits: { id: string; damage: number; health: number, projectileId: strin
                 socket.join(lobbyId)
                 socket.emit("lobbyJoined",lobby)
                 
-                // Añadir jugador al GameManager cuando entra en un lobby
-                if (!this.gameManager.getPlayer(socket.id)) {
-                    this.gameManager.addPlayer(socket.id);
-                    // Enviarle los jugadores existentes
-                    socket.emit("currentPlayers", this.gameManager.getState());
+                const lobbyPlayer = lobby.players.find(p => p.id === socket.id);
+                const existingGamePlayer = this.gameManager.getPlayer(socket.id);
+                if (!existingGamePlayer) {
+                    this.gameManager.addPlayer({
+                        id: socket.id,
+                        username: lobbyPlayer?.username || username || "Jugador",
+                        team: lobbyPlayer?.team || "blue",
+                        shipType: lobbyPlayer?.shipType || "pirate",
+                        position: { x: 0, y: 0, z: 0 },
+                        rotation: { y: 0 },
+                    });
+                } else if (lobbyPlayer) {
+                    existingGamePlayer.team = lobbyPlayer.team;
+                    existingGamePlayer.shipType = lobbyPlayer.shipType;
+                    existingGamePlayer.username = lobbyPlayer.username;
                 }
+                const playerInGame = this.gameManager.getPlayer(socket.id);
+                if (playerInGame) playerInGame.lobbyId = lobbyId;
+
+                // Enviarle los jugadores existentes
+                socket.emit("currentPlayers", this.gameManager.getState());
                 
-                // Notificar a los del lobby que llegó un nuevo jugador (con posición inicial por defecto)
-                socket.to(lobbyId).emit("playerJoined", { id: socket.id, position: { x: 0, y: 0, z: 0 }, rotation: { y: 0 } });
+                // Notificar a los del lobby que llegó un nuevo jugador solo si no estaba previamente
+                if (!isAlreadyInLobby) {
+                    socket.to(lobbyId).emit("playerJoined", { id: socket.id, position: { x: 0, y: 0, z: 0 }, rotation: { y: 0 } });
+                }
                 this.io.to(lobbyId).emit("lobbyUpdated", lobby)
                 this.io.emit("lobbiesUpdated", this.lobbyManager.getLobbies());
              })
 
          // Cliente abandona el lobby
             socket.on("leaveLobby", (data: { lobbyId: string }) => {
-            const { lobbyId }=data
-            this.lobbyManager.onLeave(socket.id,lobbyId);
+            const { lobbyId } = data;
+            if (!lobbyId) return;
+            const remainingLobby = this.lobbyManager.onLeave(socket.id, lobbyId);
             socket.leave(lobbyId);
+            if (remainingLobby) {
+                this.io.to(lobbyId).emit("lobbyUpdated", remainingLobby);
+                this.broadcastScoreboard(lobbyId);
+            }
             this.io.emit("lobbiesUpdated", this.lobbyManager.getLobbies());
             });
+
+// Pedir marcador actual de la sala
+socket.on("getScoreboard", () => {
+  const lobbyId = [...socket.rooms].find(r => r !== socket.id);
+  if (lobbyId) {
+    socket.emit("scoreboardUpdated", this.gameManager.getLobbyScoreboard(lobbyId));
+  }
+});
 
 // Un jugador está listo
 socket.on("playerReady", () => {
   const lobbyId = [...socket.rooms].find(r => r !== socket.id);
   if (lobbyId) {
+    const lobby = this.lobbyManager.getLobby(lobbyId);
+    const lobbyPlayer = lobby?.players.find(p => p.id === socket.id);
+    let gamePlayer = this.gameManager.getPlayer(socket.id);
+    if (!gamePlayer && lobbyPlayer) {
+      gamePlayer = this.gameManager.addPlayer({
+        id: socket.id,
+        username: lobbyPlayer.username,
+        team: lobbyPlayer.team,
+        shipType: lobbyPlayer.shipType,
+        position: { x: 0, y: 0, z: 0 },
+        rotation: { y: 0 },
+      });
+    } else if (gamePlayer && lobbyPlayer) {
+      gamePlayer.team = lobbyPlayer.team;
+      gamePlayer.shipType = lobbyPlayer.shipType;
+      gamePlayer.username = lobbyPlayer.username;
+      gamePlayer.lobbyId = lobbyId;
+    }
     const others = this.gameManager.getState().filter(p => p.id !== socket.id);
     socket.emit("currentPlayers", others);
     socket.to(lobbyId).emit("playerJoined", { id: socket.id });
+    this.broadcastScoreboard(lobbyId);
   }
 });
 
@@ -106,22 +184,50 @@ socket.on("updatePlayerInfo", (data: { username: string; team: string; shipType:
       this.io.to(lobbyId).emit("lobbyUpdated", lobby);
     }
   }
+
+  // Sincronizar también en GameManager
+  let player = this.gameManager.getPlayer(socket.id);
+  if (!player) {
+    player = this.gameManager.addPlayer({
+      id: socket.id,
+      username: data.username,
+      team: data.team as any,
+      shipType: data.shipType as any,
+      position: { x: 0, y: 0, z: 0 },
+      rotation: { y: 0 },
+    });
+  } else {
+    if (data.username) player.username = data.username;
+    if (data.team) player.team = data.team as any;
+    if (data.shipType) player.shipType = data.shipType as any;
+  }
+  if (player && lobbyId) {
+    player.lobbyId = lobbyId;
+    this.broadcastScoreboard(lobbyId);
+  }
 });
 
       
 
 socket.on("playerMove", (data:any) => {
-const isNewPlayer = !this.gameManager.getPlayer(socket.id);
-  if (isNewPlayer) {
-     this.gameManager.addPlayer({
-    id: socket.id,
-    username: data.username,
-    team: data.team,
-    shipType: data.shipType,
-    position: data.position,
-    rotation: data.rotation,
-    health: data.health
-  });
+  let player = this.gameManager.getPlayer(socket.id);
+  if (!player) {
+    player = this.gameManager.addPlayer({
+      id: socket.id,
+      username: data.username,
+      team: data.team,
+      shipType: data.shipType,
+      position: data.position,
+      rotation: data.rotation,
+      health: data.health
+    });
+    if (data.lobbyId) {
+      this.broadcastScoreboard(data.lobbyId);
+    }
+  } else {
+    if (data.username) player.username = data.username;
+    if (data.team) player.team = data.team;
+    if (data.shipType) player.shipType = data.shipType;
   }
 
   // siempre asegurar que está en la room y tiene lobbyId
@@ -129,9 +235,7 @@ const isNewPlayer = !this.gameManager.getPlayer(socket.id);
     socket.join(data.lobbyId);
   }
   
-  // siempre actualizar lobbyId
-  const player = this.gameManager.getPlayer(socket.id);
-  if (player) player.lobbyId = data.lobbyId; // ← fuera del if
+  if (player) player.lobbyId = data.lobbyId;
 
   this.gameManager.movePlayer(socket.id, data.position, data.rotation);
 
@@ -150,9 +254,12 @@ socket.on("playerRespawn", (data: { position: { x: number; y: number; z: number 
   const lobbyId = [...socket.rooms].find(r => r !== socket.id);
   if (lobbyId) {
     socket.to(lobbyId).emit("playerRespawn", { id: socket.id, position: data.position });
+    // llamar a respawn para resetear vida y estado
+    this.gameManager.respawnPlayer(socket.id, data.position, lobbyId);
+    this.broadcastScoreboard(lobbyId);
+  } else {
+    this.gameManager.respawnPlayer(socket.id, data.position, "");
   }
-  // llamar a respawn para resetear vida y estado
-  this.gameManager.respawnPlayer(socket.id, data.position, lobbyId || "");
 });      
 
 socket.on("playerShoot", (data: { 
@@ -195,6 +302,9 @@ socket.on("playerShoot", (data: {
                 // Notificar a todos los demás (backwards compatibility)
                 this.io.emit("playerDisconnected", { id: socket.id });
                 this.io.emit("lobbiesUpdated", this.lobbyManager.getLobbies());
+                if (lobbyId) {
+                    this.broadcastScoreboard(lobbyId);
+                }
             });
         });
 }

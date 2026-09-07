@@ -13,16 +13,30 @@ constructor(){
      return newLobby
    }
 
-   onJoin(socketId: string, lobbyId: string):Lobby | null{
-     
-    const lobby = this.lobbies.get(lobbyId);
+   onJoin(socketId: string, lobbyId: string, username?: string): Lobby | null {
+     const lobby = this.lobbies.get(lobbyId);
+     if (!lobby) return null;
 
-      if (!lobby) return null;
-      if (lobby.players.length >= lobby.maxPlayers) return null; 
-      if (lobby.players.some(p => p.id === socketId)) return null;   
-      
-      lobby.players.push({ id: socketId, username: "Jugador", team: "red" as Team, shipType: "pirate" as ShipType });
-      return lobby;
+     // Si el jugador ya está en la sala (por ejemplo es el creador/host), no duplicar
+     const existingPlayer = lobby.players.find(p => p.id === socketId);
+     if (existingPlayer) {
+       if (username && (existingPlayer.username === "Host" || existingPlayer.username === "Jugador")) {
+         existingPlayer.username = username;
+       }
+       return lobby;
+     }
+
+     if (lobby.players.length >= lobby.maxPlayers) return null; 
+     const redCount = lobby.players.filter(p => p.team === "red").length;
+     const blueCount = lobby.players.filter(p => p.team === "blue").length;
+     const assignedTeam: Team = blueCount < redCount ? "blue" : "red";
+     lobby.players.push({ 
+       id: socketId, 
+       username: username?.trim() || "Jugador", 
+       team: assignedTeam, 
+       shipType: "pirate" as ShipType 
+     });
+     return lobby;
    }
 
    onDisconnect(socketId: string): Lobby | null {
@@ -55,8 +69,12 @@ constructor(){
    }
 
   getLobbies(): Lobby[] {
-  return Array.from(this.lobbies.values());
- }
+    return Array.from(this.lobbies.values());
+  }
+
+  getLobby(lobbyId: string): Lobby | undefined {
+    return this.lobbies.get(lobbyId);
+  }
 
   updatePlayerInfo(socketId: string, lobbyId: string, username: string, team: Team, shipType: ShipType): Lobby | null {
     const lobby = this.lobbies.get(lobbyId);

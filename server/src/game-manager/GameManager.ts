@@ -68,7 +68,13 @@ respawnPlayer(id: string, position: { x: number; y: number; z: number }, lobbyId
   }
 
 
+  getLobbyScoreboard(lobbyId: string) {
+    return Array.from(this.players.values())
+      .filter(p => p.lobbyId === lobbyId)
+      .map(p => p.getScoreboardData());
+  }
+
   update(delta: number): { id: string; damage: number; health: number, projectileId: string }[] {
-  return this.projectileManager.update(delta);
-}
+    return this.projectileManager.update(delta);
+  }
 }
