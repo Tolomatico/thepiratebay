@@ -3,7 +3,6 @@ import { Water } from 'three/examples/jsm/objects/Water.js';
 
 export class Ocean {
   private water: Water;
-  private texture: THREE.Texture;
 
   constructor(scene: THREE.Scene) {
     const geometry = new THREE.PlaneGeometry(1000, 1000);

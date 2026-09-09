@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "name": "Archipiélago de la Muerte",
+  "worldSize": 2000,
+  "createdAt": "2026-09-08T04:30:00.000Z",
+  "spawnPoints": {
+    "blue": [
+      {
+        "id": "sp_blue_1",
+        "team": "blue",
+        "position": [-350, 0, -80],
+        "rotation": [0, 1.57, 0]
+      },
+      {
+        "id": "sp_blue_2",
+        "team": "blue",
+        "position": [-380, 0, 80],
+        "rotation": [0, 1.57, 0]
+      }
+    ],
+    "red": [
+      {
+        "id": "sp_red_1",
+        "team": "red",
+        "position": [350, 0, -80],
+        "rotation": [0, -1.57, 0]
+      },
+      {
+        "id": "sp_red_2",
+        "team": "red",
+        "position": [380, 0, 80],
+        "rotation": [0, -1.57, 0]
+      }
+    ]
+  },
+  "objects": []
+}

@@ -8,14 +8,17 @@ import { Game } from "./views/Game"
 import Lobby from "./views/Lobby"
 import LobbyList from "./views/LobbyList"
 import Menu from "./views/Menu"
+import { MapEditorView } from "./editor/MapEditorView"
 import { authService } from "./services/authService"
 
-type Screen = "menu" | "lobby-list" | "lobby" | "game"
+type Screen = "menu" | "lobby-list" | "lobby" | "game" | "editor"
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ""
 
 function AppContent() {
-  const [screen, setScreen] = useState<Screen>("menu")
+  const [screen, setScreen] = useState<Screen>(() => {
+    return window.location.hash === "#editor" ? "editor" : "menu"
+  })
   const { username, setUsername, setIsGuest, setEmail, setAvatarUrl } = useUser()
   const [lobby, setLobby] = useState<ILobby>()
   const network = useNetwork()
@@ -34,7 +37,8 @@ function AppContent() {
   // Inicializar estado del historial del navegador
   useEffect(() => {
     if (!window.history.state || !window.history.state.screen) {
-      window.history.replaceState({ screen: "menu" }, "", window.location.hash || "#menu")
+      const isEditor = window.location.hash === "#editor"
+      window.history.replaceState({ screen: isEditor ? "editor" : "menu" }, "", window.location.hash || "#menu")
     }
   }, [])
 
@@ -42,13 +46,18 @@ function AppContent() {
   useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
       const state = event.state
-      const targetScreen: Screen = state?.screen || "menu"
+      const targetScreen: Screen = state?.screen || (window.location.hash === "#editor" ? "editor" : "menu")
 
       // Si el jugador estaba en un lobby o en partida y retrocede, notificar al servidor
       if (screen === "lobby" || screen === "game") {
         if (lobby?.id) {
           network.leaveLobby(lobby.id)
         }
+      }
+
+      if (window.location.hash === "#editor" || targetScreen === "editor") {
+        setScreen("editor")
+        return
       }
 
       if (targetScreen === "lobby" && !lobby) {
@@ -70,6 +79,7 @@ function AppContent() {
     if (targetScreen === "lobby-list") hash = "#lobbies"
     else if (targetScreen === "lobby" && targetLobby) hash = `#lobby/${targetLobby.id}`
     else if (targetScreen === "game") hash = "#battle"
+    else if (targetScreen === "editor") hash = "#editor"
 
     const state = { screen: targetScreen, lobbyId: targetLobby?.id }
 
@@ -120,8 +130,12 @@ function AppContent() {
     navigateTo("menu")
   }
 
+  if (screen === "editor") {
+    return <MapEditorView onExit={handleBackToMenu} />
+  }
+
   if (screen === "menu") {
-    return <Menu onPlay={handlePlay} />
+    return <Menu onPlay={handlePlay} onOpenEditor={() => navigateTo("editor")} />
   }
 
   if (screen === "lobby-list") {

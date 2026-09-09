@@ -13,8 +13,8 @@ export class NetworkManager {
   private currentLobbyId: string | null = null;
 
   constructor() {
-    //this.socket = io(`https://thepiratebay.onrender.com`);
-    this.socket = io(`http://localhost:3001`);
+    const serverUrl = import.meta.env.VITE_BACK_URL || "https://thepiratebay.onrender.com";
+    this.socket = io(serverUrl);
     this.setupEvents();
   }
 

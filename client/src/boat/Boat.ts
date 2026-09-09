@@ -245,10 +245,20 @@ get position(): THREE.Vector3 {
   return this.container.position;
 }
 
-public respawn(position: THREE.Vector3) {
+public setPosition(position: THREE.Vector3, rotationY?: number) {
+  this.container.position.copy(position);
+  if (rotationY !== undefined) {
+    this.container.rotation.y = rotationY;
+  }
+}
+
+public respawn(position: THREE.Vector3, rotationY?: number) {
   this.isDead = false;
   this.speed = 0;
   this.container.position.copy(position);
+  if (rotationY !== undefined) {
+    this.container.rotation.y = rotationY;
+  }
   this.boatHealth = this.maxBoatHealth;
   this.container.visible = true;
   if (!this.scene.getObjectById(this.container.id)) {

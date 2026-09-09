@@ -5,6 +5,8 @@ import type { ILobby } from "../interfaces/lobby"
 import ShipSelector from "../components/ShipSelector"
 import TeamSelector from "../components/TeamSelector"
 import type { ShipType, Team } from "../interfaces/player"
+import { ShipUpgradesModal } from "../components/upgrades/ShipUpgradesModal"
+import { GoldShopModal } from "../components/shop/GoldShopModal"
 
 interface LobbyProps {
   lobby: ILobby
@@ -14,8 +16,10 @@ interface LobbyProps {
 
 export default function Lobby({ lobby, onStart, onLeave }: LobbyProps) {
   const [currentLobby, setCurrentLobby] = useState<ILobby>(lobby)
+  const [isUpgradesOpen, setIsUpgradesOpen] = useState(false)
+  const [isShopOpen, setIsShopOpen] = useState(false)
   const network = useNetwork()
-  const { username, shipType, setShipType, team, setTeam } = useUser()
+  const { username, shipType, setShipType, team, setTeam, gold, level } = useUser()
 
   useEffect(() => {
     network.onLobbyUpdated((lobby: ILobby) => setCurrentLobby(lobby))
@@ -60,7 +64,33 @@ export default function Lobby({ lobby, onStart, onLeave }: LobbyProps) {
               <span>Salir de la Sala</span>
             </button>
           )}
-          <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider ml-auto">
+
+          {/* Accesos Rápidos: Astillero y Tienda */}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setIsUpgradesOpen(true)}
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-cyan-950/70 hover:bg-cyan-900/70 border border-cyan-500/50 hover:border-cyan-400/80 text-cyan-200 text-xs font-bold transition-all shadow-sm hover:shadow-cyan-500/20 active:scale-95 cursor-pointer"
+            >
+              <span>🛠️</span>
+              <span>Astillero</span>
+              <span className="px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 font-mono text-[10px]">
+                Nv. {level}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsShopOpen(true)}
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-950/70 hover:bg-amber-900/70 border border-amber-500/50 hover:border-amber-400/80 text-amber-200 text-xs font-bold transition-all shadow-sm hover:shadow-amber-500/20 active:scale-95 cursor-pointer"
+            >
+              <span>🪙</span>
+              <span className="font-mono">{gold}</span>
+              <span className="text-amber-400/80 text-[10px] uppercase font-bold">Tienda</span>
+            </button>
+          </div>
+
+          <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
             Sala #{currentLobby?.id ? String(currentLobby.id).slice(0, 8) : ""}
           </div>
         </div>
@@ -157,6 +187,16 @@ export default function Lobby({ lobby, onStart, onLeave }: LobbyProps) {
           </p>
         </div>
       </div>
+
+      {/* Modales de Mejoras de Barco y Tienda de Oro */}
+      <ShipUpgradesModal
+        isOpen={isUpgradesOpen}
+        onClose={() => setIsUpgradesOpen(false)}
+      />
+      <GoldShopModal
+        isOpen={isShopOpen}
+        onClose={() => setIsShopOpen(false)}
+      />
     </div>
   )
 }

@@ -10,7 +10,7 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'https://thepiratebay.onrender.com',
         changeOrigin: true,
       },
     },

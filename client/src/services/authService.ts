@@ -11,6 +11,9 @@ const STORAGE_KEYS = {
   LEVEL: "pirate_level",
 };
 
+const BACKEND_URL = (import.meta.env.VITE_BACK_URL || "https://thepiratebay.onrender.com").replace(/\/+$/, "");
+const API_BASE = `${BACKEND_URL}/api`;
+
 class AuthService {
   /**
    * Inicia sesión como invitado con sesión temporal
@@ -32,7 +35,7 @@ class AuthService {
    * Inicia sesión con correo y contraseña
    */
   async loginWithEmail(credentials: LoginCredentials): Promise<UserSession> {
-    const response = await fetch("/api/auth/login", {
+    const response = await fetch(`${API_BASE}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(credentials),
@@ -52,7 +55,7 @@ class AuthService {
    * Registra una nueva cuenta permanente de pirata
    */
   async register(credentials: RegisterCredentials): Promise<UserSession> {
-    const response = await fetch("/api/auth/register", {
+    const response = await fetch(`${API_BASE}/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(credentials),
@@ -75,7 +78,7 @@ class AuthService {
     profile: { sub?: string; name?: string; email?: string; picture?: string },
     token?: string
   ): Promise<UserSession> {
-    const response = await fetch("/api/auth/google", {
+    const response = await fetch(`${API_BASE}/auth/google`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ profile, token }),
@@ -97,7 +100,7 @@ class AuthService {
   async loginWithGoogle(credential?: string): Promise<UserSession> {
     try {
       if (credential) {
-        const response = await fetch("/api/auth/google", {
+        const response = await fetch(`${API_BASE}/auth/google`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ credential }),

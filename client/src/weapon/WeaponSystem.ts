@@ -5,10 +5,10 @@ export abstract class WeaponSystem {
   protected origin: THREE.Object3D;
   protected cooldown :number;
   protected fireRate: number; 
-  protected damage: number ; 
+  protected damage: number = 0; 
   protected projectiles: Projectile[] = [];
   protected onShoot: (type:"left" | "right" | "front",direction:THREE.Vector3,id:string) => void;
-  protected quantity: number ;  
+  protected quantity: number = 1;  
   protected shotQueue: number = 0;    
   protected shotTimer: number = 0;
   protected instancedMesh: THREE.InstancedMesh;

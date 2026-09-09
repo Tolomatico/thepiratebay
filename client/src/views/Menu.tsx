@@ -11,6 +11,8 @@ import {
 } from "../components/auth";
 import { useUser } from "../context/UserContext";
 import { authService } from "../services/authService";
+import { ShipUpgradesModal } from "../components/upgrades/ShipUpgradesModal";
+import { GoldShopModal } from "../components/shop/GoldShopModal";
 
 interface MenuProps {
   onPlay: (
@@ -19,14 +21,17 @@ interface MenuProps {
     email?: string,
     avatar?: string
   ) => void;
+  onOpenEditor?: () => void;
 }
 
-export default function Menu({ onPlay }: MenuProps) {
+export default function Menu({ onPlay, onOpenEditor }: MenuProps) {
   const [activeTab, setActiveTab] = useState<AuthTab>("guest");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isUpgradesOpen, setIsUpgradesOpen] = useState(false);
+  const [isShopOpen, setIsShopOpen] = useState(false);
 
-  const { setUserId, setUsername, setIsGuest, setEmail, setAvatarUrl, setGold, setLevel } =
+  const { setUserId, setUsername, setIsGuest, setEmail, setAvatarUrl, setGold, setLevel, gold, level } =
     useUser();
 
   const handleSessionSuccess = (session: {
@@ -164,6 +169,50 @@ export default function Menu({ onPlay }: MenuProps) {
         {/* Insignias de Beneficios Inferiores */}
         <AuthBenefitBadges />
       </div>
+
+      {/* Barra de Accesos Rápidos Inferior */}
+      <div className="fixed bottom-4 right-4 z-20 flex items-center gap-2.5">
+        <button
+          onClick={() => setIsUpgradesOpen(true)}
+          className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 hover:border-cyan-500/60 text-slate-300 hover:text-cyan-200 text-xs font-semibold backdrop-blur-md transition-all shadow-lg cursor-pointer"
+          title="Ver Mejoras de Barco por Nivel"
+        >
+          <span>🛠️</span>
+          <span>Astillero</span>
+          <span className="text-[10px] text-cyan-400 font-mono font-bold">Nv. {level}</span>
+        </button>
+
+        <button
+          onClick={() => setIsShopOpen(true)}
+          className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 hover:border-amber-500/60 text-slate-300 hover:text-amber-200 text-xs font-semibold backdrop-blur-md transition-all shadow-lg cursor-pointer"
+          title="Abrir Tienda Pirata y Bazar de Oro"
+        >
+          <span>🪙</span>
+          <span>Mercado</span>
+          <span className="text-[10px] text-amber-400 font-mono font-bold">{gold}</span>
+        </button>
+
+        {onOpenEditor && (
+          <button
+            onClick={onOpenEditor}
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 hover:border-amber-500/60 text-slate-400 hover:text-amber-300 text-xs font-semibold backdrop-blur-md transition-all shadow-lg cursor-pointer"
+            title="Abrir Editor de Mapas 3D (#editor)"
+          >
+            <span>🗺️</span>
+            <span>Editor 3D</span>
+          </button>
+        )}
+      </div>
+
+      {/* Modales de Mejoras de Barco y Tienda de Oro */}
+      <ShipUpgradesModal
+        isOpen={isUpgradesOpen}
+        onClose={() => setIsUpgradesOpen(false)}
+      />
+      <GoldShopModal
+        isOpen={isShopOpen}
+        onClose={() => setIsShopOpen(false)}
+      />
     </div>
   );
 }

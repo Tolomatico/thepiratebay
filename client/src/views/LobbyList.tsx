@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useNetwork } from "../context/NetworkContext";
 import { useUser } from "../context/UserContext";
 import type { ILobby } from "../interfaces/lobby";
+import { ShipUpgradesModal } from "../components/upgrades/ShipUpgradesModal";
+import { GoldShopModal } from "../components/shop/GoldShopModal";
 
 interface LobbyListProps {
   onJoin: (lobby: ILobby) => void
@@ -13,9 +15,11 @@ export default function LobbyList({ onCreate, onJoin, onBack }: LobbyListProps) 
   const [lobbyName, setLobbyName] = useState("")
   const [maxPlayers, setMaxPlayers] = useState(2)
   const [creating, setCreating] = useState(false)
+  const [isUpgradesOpen, setIsUpgradesOpen] = useState(false)
+  const [isShopOpen, setIsShopOpen] = useState(false)
 
   const network = useNetwork();
-  const { username, isGuest, gold } = useUser();
+  const { username, isGuest, gold, level } = useUser();
   const [lobbies, setLobbies] = useState<ILobby[]>([]);
 
   useEffect(() => {
@@ -60,11 +64,31 @@ export default function LobbyList({ onCreate, onJoin, onBack }: LobbyListProps) 
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5 text-xs text-amber-300 font-semibold px-2.5 py-1 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+        <div className="flex items-center gap-3">
+          {/* Botón Astillero / Mejoras de Nivel */}
+          <button
+            onClick={() => setIsUpgradesOpen(true)}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-500/40 hover:border-cyan-400/70 text-cyan-200 text-xs font-bold transition-all shadow-sm hover:shadow-cyan-500/20 active:scale-95 cursor-pointer"
+            title="Abrir Astillero y Mejoras por Nivel"
+          >
+            <span>🛠️</span>
+            <span>Astillero</span>
+            <span className="px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 font-mono text-[10px]">
+              Nv. {level}
+            </span>
+          </button>
+
+          {/* Botón Mercado Negro / Tienda de Oro */}
+          <button
+            onClick={() => setIsShopOpen(true)}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-950/60 hover:bg-amber-900/60 border border-amber-500/50 hover:border-amber-400/80 text-amber-200 text-xs font-bold transition-all shadow-sm hover:shadow-amber-500/20 active:scale-95 cursor-pointer"
+            title="Abrir Tienda Pirata y Bazar de Oro"
+          >
             <span>🪙</span>
-            <span>{gold} Oro</span>
-          </div>
+            <span className="font-mono">{gold}</span>
+            <span className="text-amber-400/80 text-[10px] uppercase font-bold">Tienda</span>
+          </button>
+
           {onBack && (
             <button
               onClick={onBack}
@@ -163,6 +187,16 @@ export default function LobbyList({ onCreate, onJoin, onBack }: LobbyListProps) 
           <p className="text-gray-500 uppercase tracking-wide text-sm text-center">No hay lobbys abiertos</p>
         )}
       </div>
+
+      {/* Modales de Mejoras de Barco y Tienda de Oro */}
+      <ShipUpgradesModal
+        isOpen={isUpgradesOpen}
+        onClose={() => setIsUpgradesOpen(false)}
+      />
+      <GoldShopModal
+        isOpen={isShopOpen}
+        onClose={() => setIsShopOpen(false)}
+      />
     </div>
   )
 }

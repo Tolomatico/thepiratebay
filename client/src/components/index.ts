@@ -8,3 +8,5 @@ export * from "./ScoreboardModal";
 export * from "./Killfeed";
 export * from "./PostMatchModal";
 export * from "./MatchGoldWidget";
+export * from "./upgrades/ShipUpgradesModal";
+export * from "./shop/GoldShopModal";

@@ -26,8 +26,9 @@ export class Enemy{
       this.modelManager = new ModelManager();
       this.visualBox = new THREE.Group();
       this.container.add(this.visualBox);
-      this.leftCanon = new SideCanon(scene, this.container,this.onShoot, "left", 20);
-      this.rightCanon = new SideCanon(scene, this.container,this.onShoot, "right", 20);
+      const reg = new Map<string, Projectile>();
+      this.leftCanon = new SideCanon(scene, this.container, () => this.onShoot(), "left", 20, 2, 1000, reg);
+      this.rightCanon = new SideCanon(scene, this.container, () => this.onShoot(), "right", 20, 2, 1000, reg);
       this.loadModel().then(() => {
   });
       scene.add(this.container); 

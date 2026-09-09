@@ -13,6 +13,7 @@ import  { SoundManager } from './soundmanager/SoundManager';
 import type { ShipType, Team } from './interfaces/player';
 import { RenderPipeline } from './graphics/RenderPipeline';
 import { CombatEffectsManager } from './effects/CombatEffects';
+import { MapLoader } from './map/MapLoader';
 
 export class GameEngine {
   private scene: THREE.Scene
@@ -20,6 +21,7 @@ export class GameEngine {
   private renderer: THREE.WebGLRenderer
   private renderPipeline: RenderPipeline
   public combatEffects: CombatEffectsManager;
+  public mapLoader: MapLoader;
   private boat!: Boat
   private inputManager!: InputManager
   private modelManager: ModelManager;
@@ -88,6 +90,7 @@ export class GameEngine {
     this.soundManager=new SoundManager()
     this.modelManager = new ModelManager();
     this.scene = new THREE.Scene()
+    this.mapLoader = new MapLoader(this.scene);
     this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
     this.camera.name = "mainCamera";
     this.camera.position.set(0, 5, 5)
@@ -170,26 +173,20 @@ private updateRemotePlayersHUD() {
   });
 }
 
-private respawn() {
-  const angle = Math.random() * Math.PI * 2;
-  const radius = 40 + Math.random() * 40;
-  const position = new THREE.Vector3(
-    Math.cos(angle) * radius,
-    0,
-    Math.sin(angle) * radius
-  );
-  
-  this.boat.respawn(position);
- // this.inputManager.disabled = false; 
-  this.setRespawnCountdown(null);
-   this.networkManager.emitRespawn(position); 
-}
+  private respawn() {
+    const spawn = this.mapLoader.getSpawnPoint((this.team as "blue" | "red") || "blue");
+    this.boat.respawn(spawn.position, spawn.rotationY);
+    this.setRespawnCountdown(null);
+    this.networkManager.emitRespawn(spawn.position); 
+  }
  
 
   public async init (){
+    // Cargar mapa naval y objetos 3D desde /maps/default_map.json
+    await this.mapLoader.loadMap("/maps/default_map.json");
 
     // Inicializar los inputs 
-       this.inputManager = new InputManager()
+    this.inputManager = new InputManager()
 
     // Inicializar el barco 
     this.boat = new Boat(
@@ -214,7 +211,12 @@ private respawn() {
       this.projectileRegistry,
       (waterPos) => this.combatEffects.triggerWaterSplash(waterPos)
     );
-      // Controles del jugador
+
+    // Posicionar el barco en el punto de respawn del mapa según su equipo
+    const initialSpawn = this.mapLoader.getSpawnPoint((this.team as "blue" | "red") || "blue");
+    this.boat.setPosition(initialSpawn.position, initialSpawn.rotationY);
+
+    // Controles del jugador
     this.controls.setTarget(this.boat.getObject3D())
 
 
@@ -341,6 +343,7 @@ this.networkManager.onPlayerRespawn((data) => {
     window.removeEventListener("resize", this.onResize);
     this.inputManager?.dispose();
     this.controls?.dispose();
+    this.mapLoader?.dispose();
     this.renderPipeline.dispose();
 
     // Limpiar listeners de red específicos del juego
@@ -355,6 +358,10 @@ this.networkManager.onPlayerRespawn((data) => {
 
   animate = () => {
     if (this.isDisposed) return;
+    if (!this.boat) {
+      this.animationFrameId = requestAnimationFrame(this.animate);
+      return;
+    }
     // Actualizar el tiempo
     this.timer.update();
     const time = this.timer.getElapsed() * 1000;
