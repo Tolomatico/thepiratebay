@@ -82,15 +82,28 @@ respawnPlayer(id: string, position: { x: number; y: number; z: number }, lobbyId
   }
 
   startLobbyMatch(lobbyId: string) {
-    if (!this.lobbyStartTimes.has(lobbyId)) {
+    if (!this.lobbyStartTimes.has(lobbyId) || this.finishedLobbies.has(lobbyId)) {
       this.lobbyStartTimes.set(lobbyId, Date.now());
       this.finishedLobbies.delete(lobbyId);
+
+      // Resetear las estadísticas de combate de todos los jugadores de la sala para la nueva partida
+      for (const player of this.players.values()) {
+        if (player.lobbyId === lobbyId) {
+          player.resetMatchStats();
+        }
+      }
     }
   }
 
   resetLobbyMatch(lobbyId: string) {
     this.lobbyStartTimes.delete(lobbyId);
     this.finishedLobbies.delete(lobbyId);
+    for (const player of this.players.values()) {
+      if (player.lobbyId === lobbyId) {
+        player.lobbyId = null;
+        player.resetMatchStats();
+      }
+    }
   }
 
   checkMatchEnd(lobbyId: string, lobbyName: string, targetKills: number = 2): MatchResult | null {

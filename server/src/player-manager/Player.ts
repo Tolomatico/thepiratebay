@@ -48,6 +48,14 @@ export class Player {
     this.isAlive = true;
   }
 
+  resetMatchStats() {
+    this.kills = 0;
+    this.deaths = 0;
+    this.damageDealt = 0;
+    this.goldInHold = 0;
+    this.resetHealth();
+  }
+
   move(position: { x: number; y: number; z: number }, rotation: { y: number }) {
     this.position = position;
     this.rotation = rotation;

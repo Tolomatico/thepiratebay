@@ -117,9 +117,12 @@ export class SocketManager {
                       existingGamePlayer.username = name || "Host";
                       existingGamePlayer.team = "red";
                       existingGamePlayer.setShipType(shipType);
-                      existingGamePlayer.resetHealth();
+                      existingGamePlayer.resetMatchStats();
                   }
-                  if (existingGamePlayer) existingGamePlayer.lobbyId = lobby.id;
+                  if (existingGamePlayer) {
+                      existingGamePlayer.lobbyId = lobby.id;
+                      existingGamePlayer.resetMatchStats();
+                  }
            })
 
 // Cliente se une al lobby
@@ -151,10 +154,13 @@ export class SocketManager {
                     if (userId) existingGamePlayer.userId = userId;
                     existingGamePlayer.team = lobbyPlayer.team;
                     existingGamePlayer.setShipType(shipType);
-                    existingGamePlayer.resetHealth();
                     existingGamePlayer.username = lobbyPlayer.username;
+                    existingGamePlayer.resetMatchStats();
                 }
-                if (existingGamePlayer) existingGamePlayer.lobbyId = lobbyId;
+                if (existingGamePlayer) {
+                    existingGamePlayer.lobbyId = lobbyId;
+                    existingGamePlayer.resetMatchStats();
+                }
 
                 // Enviarle los jugadores existentes
                 socket.emit("currentPlayers", this.gameManager.getState());
@@ -173,9 +179,18 @@ export class SocketManager {
             if (!lobbyId) return;
             const remainingLobby = this.lobbyManager.onLeave(socket.id, lobbyId);
             socket.leave(lobbyId);
+
+            const player = this.gameManager.getPlayer(socket.id);
+            if (player) {
+                player.lobbyId = null;
+                player.resetMatchStats();
+            }
+
             if (remainingLobby) {
                 this.io.to(lobbyId).emit("lobbyUpdated", remainingLobby);
                 this.broadcastScoreboard(lobbyId);
+            } else {
+                this.gameManager.resetLobbyMatch(lobbyId);
             }
             this.io.emit("lobbiesUpdated", this.lobbyManager.getLobbies());
             });
@@ -211,6 +226,7 @@ socket.on("playerReady", () => {
       gamePlayer.resetHealth();
       gamePlayer.username = lobbyPlayer.username;
       gamePlayer.lobbyId = lobbyId;
+      gamePlayer.resetMatchStats();
     }
     const others = this.gameManager.getState().filter(p => p.id !== socket.id);
     socket.emit("currentPlayers", others);
